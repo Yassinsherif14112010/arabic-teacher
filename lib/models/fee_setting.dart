@@ -14,10 +14,10 @@ class FeeSetting {
 
   factory FeeSetting.fromMap(Map<String, dynamic> map) {
     return FeeSetting(
-      id: map['id'] as int?,
-      academicYear: map['academicYear'] as String,
-      grade: map['grade'] as String,
-      feeAmount: double.tryParse(map['feeAmount'].toString()) ?? 0.0,
+      id: map['id'] != null ? (map['id'] as num).toInt() : null,
+      academicYear: (map['academicYear'] ?? '').toString(),
+      grade: (map['grade'] ?? '').toString(),
+      feeAmount: double.tryParse((map['feeAmount'] ?? '0').toString()) ?? 0.0,
     );
   }
 

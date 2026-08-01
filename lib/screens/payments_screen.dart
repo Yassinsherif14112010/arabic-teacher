@@ -51,7 +51,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
             // ── Header ──────────────────────────────────────────────────
             Row(
               children: [
-                Icon(Icons.payments_rounded,
+                const Icon(Icons.payments_rounded,
                     color: AppColors.orange, size: 26),
                 const SizedBox(width: 12),
                 Text('إدارة المصروفات والدفعات',
@@ -176,7 +176,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
 
   Widget _buildStudentFilter(AppProvider app, ThemeData theme) {
     return DropdownButtonFormField<int?>(
-      value: _filterStudentId,
+      initialValue: _filterStudentId,
       decoration: const InputDecoration(labelText: 'تصفية بالطالب'),
       items: [
         const DropdownMenuItem(value: null, child: Text('كل الطلاب')),
@@ -251,7 +251,7 @@ class _FeeSettingsPanelState extends State<_FeeSettingsPanel> {
           children: [
             Row(
               children: [
-                Icon(Icons.settings_outlined,
+                const Icon(Icons.settings_outlined,
                     color: AppColors.orange, size: 20),
                 const SizedBox(width: 8),
                 Text('إعداد رسوم السنة الدراسية',
@@ -275,7 +275,7 @@ class _FeeSettingsPanelState extends State<_FeeSettingsPanel> {
                 SizedBox(
                   width: 220,
                   child: DropdownButtonFormField<String>(
-                    value: _grade,
+                    initialValue: _grade,
                     decoration: const InputDecoration(labelText: 'الصف'),
                     items: kGrades
                         .map((g) =>
@@ -432,7 +432,7 @@ class _AddPaymentFormState extends State<_AddPaymentForm> {
                 SizedBox(
                   width: 240,
                   child: DropdownButtonFormField<int?>(
-                    value: _studentId,
+                    initialValue: _studentId,
                     decoration:
                         const InputDecoration(labelText: 'الطالب *'),
                     items: [
@@ -464,7 +464,7 @@ class _AddPaymentFormState extends State<_AddPaymentForm> {
                 SizedBox(
                   width: 180,
                   child: DropdownButtonFormField<PaymentMethod>(
-                    value: _method,
+                    initialValue: _method,
                     decoration:
                         const InputDecoration(labelText: 'طريقة الدفع'),
                     items: PaymentMethod.values

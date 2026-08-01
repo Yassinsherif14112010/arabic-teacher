@@ -5,7 +5,9 @@ import '../models/attendance.dart';
 import '../models/student.dart';
 import '../theme/app_theme.dart';
 import '../widgets/empty_state.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'students_screen.dart' show kGrades;
+import '../widgets/motion/shimmer_loading.dart';
 
 /// Attendance screen — barcode scan, roll-number entry, manual per-student.
 class AttendanceScreen extends StatefulWidget {
@@ -28,7 +30,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   AttendanceStatus? _expandedStat;
 
   // Attendance records for selected date (loaded on demand)
-  List<Attendance> _dateRecords = [];
   bool _loadingRecords = false;
 
   static String _todayStr() {
@@ -51,17 +52,23 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   Future<void> _loadRecords() async {
     setState(() => _loadingRecords = true);
-    final app = context.read<AppProvider>();
-    final records = await app.getAttendanceForDate(_selectedDate);
-    if (mounted) {
-      setState(() {
-        _dateRecords = records;
-        _localStatus.clear();
-        for (final r in records) {
-          _localStatus[r.studentId] = r.status;
-        }
-        _loadingRecords = false;
-      });
+    try {
+      final app = context.read<AppProvider>();
+      final records = await app.getAttendanceForDate(_selectedDate);
+      if (mounted) {
+        setState(() {
+          _localStatus.clear();
+          for (final r in records) {
+            _localStatus[r.studentId] = r.status;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading attendance records: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _loadingRecords = false);
+      }
     }
   }
 
@@ -159,7 +166,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: _loadingRecords
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: ShimmerLoading(width: 320, height: 160, borderRadius: 16))
           : SingleChildScrollView(
               padding: EdgeInsets.all(padding),
               child: Column(
@@ -168,7 +175,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   // ── Header ─────────────────────────────────────────────
                   Row(
                     children: [
-                      Icon(Icons.calendar_today,
+                      const Icon(Icons.calendar_today,
                           color: AppColors.emerald, size: 26),
                       const SizedBox(width: 12),
                       Text('تسجيل الحضور والغياب',
@@ -296,7 +303,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                                 : AttendanceStatus.late),
                       ),
                     ],
-                  ),
+                  ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.08, end: 0),
 
                   // Expanded stat list
                   if (_expandedStat != null) ...[
@@ -429,18 +436,26 @@ class _RollCard extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: DropdownButtonFormField<String>(
-                    value: grade,
+                    isExpanded: true,
+                    initialValue: grade,
                     decoration:
                         const InputDecoration(hintText: 'اختر الصف...'),
                     items: kGrades
-                        .map((g) =>
-                            DropdownMenuItem(value: g, child: Text(g)))
+                        .map((g) => DropdownMenuItem(
+                              value: g,
+                              child: Text(
+                                g,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ))
                         .toList(),
                     onChanged: (v) => onGradeChanged(v!),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
+                  flex: 2,
                   child: TextField(
                     controller: ctrl,
                     keyboardType: TextInputType.number,
@@ -448,7 +463,7 @@ class _RollCard extends StatelessWidget {
                     decoration: const InputDecoration(hintText: 'الرقم'),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: onSubmit,
                   style: ElevatedButton.styleFrom(

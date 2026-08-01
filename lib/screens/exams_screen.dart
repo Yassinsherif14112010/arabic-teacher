@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/confirm_dialog.dart';
 import 'students_screen.dart' show kGrades;
+import '../widgets/motion/shimmer_loading.dart';
 
 /// Exams & Grades screen — per-student grade tracking with stats.
 class ExamsScreen extends StatefulWidget {
@@ -47,7 +48,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
             // ── Header ──────────────────────────────────────────────────
             Row(
               children: [
-                Icon(Icons.school_rounded,
+                const Icon(Icons.school_rounded,
                     color: AppColors.purple, size: 26),
                 const SizedBox(width: 12),
                 Text('الامتحانات والدرجات',
@@ -106,7 +107,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
                 message: 'اختر طالباً لعرض درجاته',
               )
             else if (_loadingGrades)
-              const Center(child: CircularProgressIndicator())
+              const Center(child: ShimmerLoading(width: 300, height: 120, borderRadius: 12))
             else ...[
               _buildStudentStats(theme),
               const SizedBox(height: 16),
@@ -132,7 +133,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
 
   Widget _buildGradeFilter(ThemeData theme) {
     return DropdownButtonFormField<String?>(
-      value: _filterGrade.isEmpty ? null : _filterGrade,
+      initialValue: _filterGrade.isEmpty ? null : _filterGrade,
       decoration: const InputDecoration(labelText: 'تصفية بالصف'),
       items: [
         const DropdownMenuItem(value: null, child: Text('كل الصفوف')),
@@ -149,7 +150,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
   Widget _buildStudentSelector(
       List<Student> students, ThemeData theme) {
     return DropdownButtonFormField<Student?>(
-      value: _selectedStudent,
+      initialValue: _selectedStudent,
       decoration:
           const InputDecoration(labelText: 'عرض درجات طالب'),
       items: [
@@ -172,7 +173,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
 
   Widget _buildTypeFilter(ThemeData theme) {
     return DropdownButtonFormField<ExamType?>(
-      value: _filterType,
+      initialValue: _filterType,
       decoration: const InputDecoration(labelText: 'نوع الامتحان'),
       items: [
         const DropdownMenuItem(value: null, child: Text('كل الأنواع')),
@@ -299,6 +300,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
                         confirmLabel: 'حذف',
                       );
                       if (confirmed && context.mounted) {
+                        // ignore: use_build_context_synchronously
                         await context.read<AppProvider>().deleteGrade(g.id!);
                         if (_selectedStudent != null) {
                           await _loadGrades(_selectedStudent!);
@@ -397,7 +399,7 @@ class _AddGradeFormState extends State<_AddGradeForm> {
                 SizedBox(
                   width: 240,
                   child: DropdownButtonFormField<int?>(
-                    value: _studentId,
+                    initialValue: _studentId,
                     decoration:
                         const InputDecoration(labelText: 'الطالب *'),
                     items: [
@@ -414,7 +416,7 @@ class _AddGradeFormState extends State<_AddGradeForm> {
                 SizedBox(
                   width: 160,
                   child: DropdownButtonFormField<ExamType>(
-                    value: _examType,
+                    initialValue: _examType,
                     decoration:
                         const InputDecoration(labelText: 'نوع الامتحان'),
                     items: ExamType.values

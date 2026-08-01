@@ -1,14 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'services/sync_service.dart';
 import 'providers/app_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/auth_provider.dart';
 import 'screens/app_shell.dart';
+import 'screens/auth/login_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize database factory for web
+  if (kIsWeb) {
+    databaseFactory = databaseFactoryFfiWeb;
+  }
+
+  // Initialize Supabase Cloud Connection if configured
+  if (SyncService.isConfigured) {
+    try {
+      await Supabase.initialize(
+        url: SyncService.supabaseUrl,
+        publishableKey: SyncService.supabaseAnonKey,
+      );
+    } catch (_) {
+      // Allow seamless offline startup if cloud servers are currently unreachable
+    }
+  }
 
   // Prefer landscape on tablets
   await SystemChrome.setPreferredOrientations([
@@ -29,6 +53,7 @@ class ArabicTeacherApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()..load()),
         ChangeNotifierProvider(create: (_) => AppProvider()..loadAll()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
@@ -59,7 +84,18 @@ class ArabicTeacherApp extends StatelessWidget {
               );
             },
 
-            home: const AppShell(),
+            home: Consumer<AuthProvider>(
+              builder: (context, auth, _) {
+                if (!auth.isInitialized) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                return auth.isAuthenticated
+                    ? const AppShell()
+                    : const LoginScreen();
+              },
+            ),
           );
         },
       ),

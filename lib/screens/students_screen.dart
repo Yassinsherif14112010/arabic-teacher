@@ -7,6 +7,7 @@ import '../models/study_group.dart';
 import '../theme/app_theme.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/confirm_dialog.dart';
+import '../widgets/motion/staggered_list_item.dart';
 
 const List<String> kGrades = [
   'الصف الأول الإعدادي',
@@ -103,15 +104,18 @@ class _StudentsScreenState extends State<StudentsScreen> {
                         itemBuilder: (context, gi) {
                           final grade = gradeOrder[gi];
                           final gradeStudents = byGrade[grade]!;
-                          return _GradeSection(
-                            grade: grade,
-                            students: gradeStudents,
-                            app: app,
-                            isTablet: isTablet,
-                            onViewCard: (s) =>
-                                setState(() => _selectedStudent = s),
-                            onEdit: (s) =>
-                                _showStudentDialog(context, app, existing: s),
+                          return StaggeredListItem(
+                            index: gi,
+                            child: _GradeSection(
+                              grade: grade,
+                              students: gradeStudents,
+                              app: app,
+                              isTablet: isTablet,
+                              onViewCard: (s) =>
+                                  setState(() => _selectedStudent = s),
+                              onEdit: (s) =>
+                                  _showStudentDialog(context, app, existing: s),
+                            ),
                           );
                         },
                       ),
@@ -222,7 +226,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     ),
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String?>(
-                      value: selectedGrade,
+                      initialValue: selectedGrade,
                       decoration:
                           const InputDecoration(labelText: 'الصف الدراسي'),
                       items: [
@@ -239,7 +243,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     if (selectedGrade != null) ...[
                       const SizedBox(height: 14),
                       DropdownButtonFormField<int?>(
-                        value: selectedGroupId,
+                        initialValue: selectedGroupId,
                         decoration: const InputDecoration(
                             labelText: 'المجموعة الدراسية'),
                         items: [
@@ -374,13 +378,16 @@ class _GradeSection extends StatelessWidget {
             ...students.asMap().entries.map((entry) {
               final idx = entry.key;
               final student = entry.value;
-              return _StudentRow(
-                index: idx + 1,
-                student: student,
-                app: app,
-                isTablet: isTablet,
-                onViewCard: () => onViewCard(student),
-                onEdit: () => onEdit(student),
+              return StaggeredListItem(
+                index: idx,
+                child: _StudentRow(
+                  index: idx + 1,
+                  student: student,
+                  app: app,
+                  isTablet: isTablet,
+                  onViewCard: () => onViewCard(student),
+                  onEdit: () => onEdit(student),
+                ),
               );
             }),
           ],
@@ -606,18 +613,15 @@ class _BarcodeCardOverlay extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            width: 48,
+                            height: 48,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  AppColors.primary,
-                                  AppColors.purple
-                                ],
-                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.menu_book_rounded,
-                                color: Colors.white, size: 24),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.asset('assets/logo.jpg', fit: BoxFit.cover),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           const Expanded(

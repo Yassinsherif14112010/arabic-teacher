@@ -26,13 +26,13 @@ class Student {
 
   factory Student.fromMap(Map<String, dynamic> map) {
     return Student(
-      id: map['id'] as int?,
-      name: map['name'] as String,
+      id: map['id'] != null ? (map['id'] as num).toInt() : null,
+      name: (map['name'] ?? '').toString(),
       phone: map['phone'] as String?,
       parentPhone: map['parentPhone'] as String?,
-      barcodeNumber: map['barcodeNumber'] as String,
+      barcodeNumber: (map['barcodeNumber'] ?? '').toString(),
       grade: map['grade'] as String?,
-      groupId: map['groupId'] as int?,
+      groupId: map['groupId'] != null ? (map['groupId'] as num).toInt() : null,
       feePaid: (map['feePaid'] == 1 || map['feePaid'] == true),
       status: (map['status'] as String?) ?? 'active',
       createdAt: map['createdAt'] != null

@@ -25,6 +25,7 @@ class AppColors {
   static const Color lightBg = Color(0xFFF8FAFC);
   static const Color lightCard = Color(0xFFFFFFFF);
   static const Color lightBorder = Color(0xFFE2E8F0);
+  static const Color lightSidebar = Color(0xFFFFFFFF);
 }
 
 class AppTheme {
@@ -32,7 +33,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         secondary: AppColors.purple,
         surface: AppColors.darkCard,
@@ -57,7 +58,7 @@ class AppTheme {
           color: Colors.white,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.darkCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -118,7 +119,7 @@ class AppTheme {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.darkCard,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -146,11 +147,11 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.purple,
         surface: AppColors.lightCard,
-        onSurface: const Color(0xFF0F172A),
+        onSurface: Color(0xFF0F172A),
         outline: AppColors.lightBorder,
         error: AppColors.red,
       ),
@@ -171,7 +172,7 @@ class AppTheme {
           color: Color(0xFF0F172A),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.lightCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -232,7 +233,7 @@ class AppTheme {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.lightCard,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

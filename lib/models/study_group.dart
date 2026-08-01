@@ -16,9 +16,9 @@ class StudyGroup {
 
   factory StudyGroup.fromMap(Map<String, dynamic> map) {
     return StudyGroup(
-      id: map['id'] as int?,
-      name: map['name'] as String,
-      grade: map['grade'] as String,
+      id: map['id'] != null ? (map['id'] as num).toInt() : null,
+      name: (map['name'] ?? '').toString(),
+      grade: (map['grade'] ?? '').toString(),
       schedule: map['schedule'] as String?,
       description: map['description'] as String?,
     );

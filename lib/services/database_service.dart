@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/student.dart';
@@ -11,7 +12,7 @@ import '../models/fee_setting.dart';
 /// No network dependency — all data is persisted locally.
 class DatabaseService {
   static Database? _db;
-  static const int _version = 2;
+  static const int _version = 4;
   static const String _dbName = 'arabic_teacher_v2.db';
 
   static Future<Database> get database async {
@@ -20,8 +21,13 @@ class DatabaseService {
   }
 
   static Future<Database> _initDb() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, _dbName);
+    String path;
+    if (kIsWeb) {
+      path = inMemoryDatabasePath;
+    } else {
+      final dbPath = await getDatabasesPath();
+      path = join(dbPath, _dbName);
+    }
     return openDatabase(
       path,
       version: _version,
@@ -45,6 +51,29 @@ class DatabaseService {
           grade TEXT NOT NULL,
           feeAmount TEXT NOT NULL,
           UNIQUE(academicYear, grade)
+        )
+      ''');
+    }
+    if (oldVersion < 3) {
+      // Add sync_queue table for offline-first Supabase sync
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS sync_queue (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          entityName TEXT NOT NULL,
+          operation TEXT NOT NULL,
+          entityId TEXT NOT NULL,
+          payload TEXT NOT NULL,
+          createdAt TEXT NOT NULL
+        )
+      ''');
+    }
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS auth_audit_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          eventType TEXT NOT NULL,
+          message TEXT NOT NULL,
+          timestamp TEXT NOT NULL
         )
       ''');
     }
@@ -119,6 +148,26 @@ class DatabaseService {
         grade TEXT NOT NULL,
         feeAmount TEXT NOT NULL,
         UNIQUE(academicYear, grade)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE sync_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entityName TEXT NOT NULL,
+        operation TEXT NOT NULL,
+        entityId TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        createdAt TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE auth_audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        eventType TEXT NOT NULL,
+        message TEXT NOT NULL,
+        timestamp TEXT NOT NULL
       )
     ''');
   }
@@ -291,6 +340,62 @@ class DatabaseService {
     await db.delete('fee_settings', where: 'id = ?', whereArgs: [id]);
   }
 
+  // ─── Sync Queue ───────────────────────────────────────────────────────────
+
+  static Future<int> enqueueSyncItem({
+    required String entityName,
+    required String operation,
+    required String entityId,
+    required String payload,
+  }) async {
+    final db = await database;
+    return db.insert('sync_queue', {
+      'entityName': entityName,
+      'operation': operation,
+      'entityId': entityId,
+      'payload': payload,
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  static Future<List<Map<String, dynamic>>> getPendingSyncItems() async {
+    final db = await database;
+    return db.query('sync_queue', orderBy: 'id ASC');
+  }
+
+  static Future<void> deleteSyncItem(int id) async {
+    final db = await database;
+    await db.delete('sync_queue', where: 'id = ?', whereArgs: [id]);
+  }
+
+  static Future<void> clearSyncQueue() async {
+    final db = await database;
+    await db.delete('sync_queue');
+  }
+
+  // ─── Auth Audit Logs ──────────────────────────────────────────────────────
+
+  static Future<int> logAuthEvent({
+    required String eventType,
+    required String message,
+  }) async {
+    final db = await database;
+    return db.insert('auth_audit_logs', {
+      'eventType': eventType,
+      'message': message,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+  }
+
+  static Future<List<Map<String, dynamic>>> getAuthLogs({int limit = 50}) async {
+    final db = await database;
+    return db.query(
+      'auth_audit_logs',
+      orderBy: 'id DESC',
+      limit: limit,
+    );
+  }
+
   // ─── Utilities ────────────────────────────────────────────────────────────
 
   /// Wipe all data (useful for testing / reset).
@@ -302,6 +407,8 @@ class DatabaseService {
     await db.delete('payments');
     await db.delete('grades');
     await db.delete('fee_settings');
+    await db.delete('sync_queue');
+    await db.delete('auth_audit_logs');
   }
 
   /// Close the database (used in tests).

@@ -6,6 +6,9 @@ import '../theme/app_theme.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/confirm_dialog.dart';
+import '../widgets/motion/staggered_list_item.dart';
+import '../widgets/motion/premium_interactive_widget.dart';
+import '../widgets/motion/shimmer_loading.dart';
 
 /// Dashboard — overview stats, study groups management, quick actions.
 class DashboardScreen extends StatefulWidget {
@@ -35,7 +38,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final padding = isTablet ? 28.0 : 16.0;
 
     if (app.loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: ShimmerLoading(width: 320, height: 160, borderRadius: 16),
+      );
     }
 
     return Scaffold(
@@ -198,18 +203,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: isTablet ? 1.7 : 1.4,
+        mainAxisExtent: 125,
       ),
       itemCount: stats.length,
       itemBuilder: (context, i) {
         final s = stats[i];
-        return StatCard(
-          title: s.title,
-          value: s.value,
-          subtitle: s.subtitle,
-          icon: s.icon,
-          iconColor: s.color,
-          borderColor: s.color,
+        return StaggeredListItem(
+          index: i,
+          child: PremiumInteractiveWidget(
+            enableHoverGlow: true,
+            child: StatCard(
+              title: s.title,
+              value: s.value,
+              subtitle: s.subtitle,
+              icon: s.icon,
+              iconColor: s.color,
+              borderColor: s.color,
+            ),
+          ),
         );
       },
     );
@@ -272,7 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   maxCrossAxisExtent: 280,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 2.2,
+                  mainAxisExtent: 100,
                 ),
                 itemCount: app.groups.length,
                 itemBuilder: (context, i) =>
@@ -293,15 +304,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 86,
+              height: 86,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.purple],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primary.withAlpha(77),
@@ -310,10 +316,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.menu_book_rounded,
-                color: Colors.white,
-                size: 40,
+              child: ClipOval(
+                child: Image.asset('assets/logo.jpg', fit: BoxFit.cover),
               ),
             ),
             const SizedBox(height: 16),
@@ -368,7 +372,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.today_outlined,
+                const Icon(Icons.today_outlined,
                     color: AppColors.emerald, size: 22),
                 const SizedBox(width: 10),
                 Text('ملخص حضور اليوم', style: theme.textTheme.titleLarge),
@@ -423,7 +427,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedGrade,
+                  initialValue: selectedGrade,
                   decoration:
                       const InputDecoration(labelText: 'الصف الدراسي'),
                   items: _grades

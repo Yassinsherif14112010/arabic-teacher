@@ -54,10 +54,10 @@ class Attendance {
 
   factory Attendance.fromMap(Map<String, dynamic> map) {
     return Attendance(
-      id: map['id'] as int?,
-      studentId: map['studentId'] as int,
-      attendanceDate: map['attendanceDate'] as String,
-      status: AttendanceStatusExt.fromString(map['status'] as String),
+      id: map['id'] != null ? (map['id'] as num).toInt() : null,
+      studentId: (map['studentId'] as num).toInt(),
+      attendanceDate: (map['attendanceDate'] ?? '').toString(),
+      status: AttendanceStatusExt.fromString(map['status']?.toString() ?? 'absent'),
       notes: map['notes'] as String?,
     );
   }

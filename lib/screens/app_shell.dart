@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
 import '../providers/theme_provider.dart';
+import '../services/sync_service.dart';
 import '../theme/app_theme.dart';
 import 'dashboard_screen.dart';
 import 'students_screen.dart';
 import 'attendance_screen.dart';
 import 'payments_screen.dart';
 import 'exams_screen.dart';
+import 'auth/security_settings_dialog.dart';
+import '../widgets/motion/premium_interactive_widget.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 /// Navigation destination descriptor.
 class _NavItem {
@@ -110,7 +115,7 @@ class _TabletLayout extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final sidebarBg =
-        isDark ? AppColors.darkSidebar : const Color(0xFF1E293B);
+        isDark ? AppColors.darkSidebar : AppColors.lightSidebar;
 
     return Scaffold(
       body: Row(
@@ -127,9 +132,15 @@ class _TabletLayout extends StatelessWidget {
           ),
           // ── Content ──────────────────────────────────────────────────────
           Expanded(
-            child: IndexedStack(
-              index: selectedIndex,
-              children: items.map((i) => i.screen).toList(),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: IndexedStack(
+                key: ValueKey<int>(selectedIndex),
+                index: selectedIndex,
+                children: items.map((i) => i.screen).toList(),
+              ),
             ),
           ),
         ],
@@ -157,6 +168,10 @@ class _PhoneLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sidebarBg =
+        isDark ? AppColors.darkSidebar : AppColors.lightSidebar;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -166,6 +181,7 @@ class _PhoneLayout extends StatelessWidget {
         title: Text(items[selectedIndex].label),
       ),
       drawer: Drawer(
+        backgroundColor: sidebarBg,
         child: _Sidebar(
           items: items,
           selectedIndex: selectedIndex,
@@ -173,7 +189,7 @@ class _PhoneLayout extends StatelessWidget {
             onSelect(i);
             Navigator.pop(context);
           },
-          backgroundColor: const Color(0xFF1E293B),
+          backgroundColor: sidebarBg,
         ),
       ),
       body: IndexedStack(
@@ -202,9 +218,17 @@ class _Sidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.isDark;
 
     return Container(
-      color: backgroundColor,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border(
+          left: BorderSide(
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          ),
+        ),
+      ),
       child: SafeArea(
         child: Column(
           children: [
@@ -218,20 +242,21 @@ class _Sidebar extends StatelessWidget {
                     height: 52,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.purple],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withAlpha(50),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
-                    child: const Icon(
-                      Icons.menu_book_rounded,
-                      color: Colors.white,
-                      size: 28,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.asset('assets/logo.jpg', fit: BoxFit.cover),
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -241,7 +266,9 @@ class _Sidebar extends StatelessWidget {
                             fontFamily: 'Cairo',
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         Text(
@@ -249,7 +276,9 @@ class _Sidebar extends StatelessWidget {
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 11,
-                            color: AppColors.primaryLight,
+                            color: isDark
+                                ? AppColors.primaryLight
+                                : AppColors.primaryDark,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -266,23 +295,31 @@ class _Sidebar extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white.withAlpha(13),
+                color: isDark
+                    ? Colors.white.withAlpha(13)
+                    : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withAlpha(26)),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withAlpha(26)
+                      : AppColors.lightBorder,
+                ),
               ),
               child: Row(
                 children: [
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: AppColors.primary.withAlpha(51),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person,
-                      color: AppColors.primaryLight,
+                      color: isDark
+                          ? AppColors.primaryLight
+                          : AppColors.primaryDark,
                       size: 20,
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -292,7 +329,9 @@ class _Sidebar extends StatelessWidget {
                             fontFamily: 'Cairo',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         Text(
@@ -300,28 +339,56 @@ class _Sidebar extends StatelessWidget {
                           style: TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 10,
-                            color: AppColors.primaryLight,
+                            color: isDark
+                                ? AppColors.primaryLight
+                                : const Color(0xFF64748B),
                           ),
                         ),
                       ],
                     ),
                   ),
+                  // Security / Audit Log button
+                  PremiumInteractiveWidget(
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (_) => const SecuritySettingsDialog(),
+                    ),
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 6),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withAlpha(13)
+                            : const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.security_outlined,
+                        color: AppColors.emerald,
+                        size: 18,
+                      ),
+                    ),
+                  ),
                   // Theme toggle
-                  GestureDetector(
+                  PremiumInteractiveWidget(
                     onTap: themeProvider.toggle,
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(13),
+                        color: isDark
+                            ? Colors.white.withAlpha(13)
+                            : const Color(0xFFE2E8F0),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         themeProvider.isDark
                             ? Icons.light_mode_outlined
                             : Icons.dark_mode_outlined,
-                        color: Colors.white70,
+                        color: isDark
+                            ? Colors.white70
+                            : const Color(0xFF334155),
                         size: 18,
-                      ),
+                      ).animate(target: themeProvider.isDark ? 1 : 0).rotate(begin: 0.0, end: 0.5, duration: const Duration(milliseconds: 350), curve: Curves.easeOutBack),
                     ),
                   ),
                 ],
@@ -329,7 +396,10 @@ class _Sidebar extends StatelessWidget {
             ),
 
             const SizedBox(height: 16),
-            Divider(color: Colors.white.withAlpha(26), height: 1),
+            Divider(
+              color: isDark ? Colors.white.withAlpha(26) : AppColors.lightBorder,
+              height: 1,
+            ),
             const SizedBox(height: 8),
 
             // ── Navigation items ──────────────────────────────────────────
@@ -349,17 +419,61 @@ class _Sidebar extends StatelessWidget {
               ),
             ),
 
-            // ── Footer ────────────────────────────────────────────────────
+            // ── Sync & Footer ──────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Text(
-                'نسخة 2.0 — أوفلاين',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 11,
-                  color: Colors.white.withAlpha(77),
-                ),
-                textAlign: TextAlign.center,
+              child: Consumer<AppProvider>(
+                builder: (context, app, _) {
+                  final pending = app.pendingSyncCount;
+                  final status = app.syncStatus;
+                  IconData icon = Icons.cloud_done;
+                  Color color = isDark ? Colors.greenAccent : const Color(0xFF059669);
+                  String label = 'مُزامن مع السحابة';
+
+                  if (status == SyncStatus.offline || !SyncService.isConfigured) {
+                    icon = Icons.cloud_off;
+                    color = isDark ? Colors.orangeAccent : const Color(0xFFEA580C);
+                    label = pending > 0 ? 'أوفلاين ($pending معلقة)' : 'أوفلاين (SQLite)';
+                  } else if (status == SyncStatus.syncing) {
+                    icon = Icons.sync;
+                    color = isDark ? Colors.blueAccent : AppColors.primaryDark;
+                    label = 'جاري المزامن...';
+                  } else if (status == SyncStatus.error) {
+                    icon = Icons.cloud_queue;
+                    color = isDark ? Colors.redAccent : AppColors.red;
+                    label = 'خطأ في المزامن';
+                  }
+
+                  return InkWell(
+                    onTap: app.syncNow,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: color.withAlpha(26),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: color.withAlpha(51)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, size: 14, color: color),
+                          const SizedBox(width: 6),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -382,32 +496,42 @@ class _NavTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
+      child: PremiumInteractiveWidget(
+        onTap: onTap,
+        enableHoverGlow: true,
+        child: Material(
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: AnimatedContainer(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onTap,
+            child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: isActive
-                  ? AppColors.primary.withAlpha(51)
+                  ? AppColors.primary.withAlpha(isDark ? 51 : 30)
                   : Colors.transparent,
               border: isActive
-                  ? Border.all(color: AppColors.primary.withAlpha(77))
+                  ? Border.all(
+                      color: AppColors.primary.withAlpha(isDark ? 77 : 60))
                   : null,
             ),
             child: Row(
               children: [
                 Icon(
                   isActive ? item.activeIcon : item.icon,
-                  color: isActive ? AppColors.primaryLight : Colors.white54,
+                  color: isActive
+                      ? (isDark
+                          ? AppColors.primaryLight
+                          : AppColors.primaryDark)
+                      : (isDark ? Colors.white54 : const Color(0xFF64748B)),
                   size: 22,
                 ),
                 const SizedBox(width: 14),
@@ -419,7 +543,11 @@ class _NavTile extends StatelessWidget {
                       fontSize: 14,
                       fontWeight:
                           isActive ? FontWeight.bold : FontWeight.w500,
-                      color: isActive ? Colors.white : Colors.white60,
+                      color: isActive
+                          ? (isDark ? Colors.white : AppColors.primaryDark)
+                          : (isDark
+                              ? Colors.white60
+                              : const Color(0xFF475569)),
                     ),
                   ),
                 ),
@@ -427,8 +555,10 @@ class _NavTile extends StatelessWidget {
                   Container(
                     width: 6,
                     height: 6,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryLight,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.primaryLight
+                          : AppColors.primaryDark,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -436,6 +566,7 @@ class _NavTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

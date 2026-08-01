@@ -58,12 +58,11 @@ class Payment {
 
   factory Payment.fromMap(Map<String, dynamic> map) {
     return Payment(
-      id: map['id'] as int?,
-      studentId: map['studentId'] as int,
-      amount: double.tryParse(map['amount'].toString()) ?? 0.0,
-      paymentDate: map['paymentDate'] as String,
-      paymentMethod:
-          PaymentMethodExt.fromString(map['paymentMethod'] as String),
+      id: map['id'] != null ? (map['id'] as num).toInt() : null,
+      studentId: (map['studentId'] as num).toInt(),
+      amount: double.tryParse((map['amount'] ?? '0').toString()) ?? 0.0,
+      paymentDate: (map['paymentDate'] ?? '').toString(),
+      paymentMethod: PaymentMethodExt.fromString((map['paymentMethod'] ?? '').toString()),
       month: map['month'] as String?,
       notes: map['notes'] as String?,
     );

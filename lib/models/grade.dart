@@ -63,12 +63,12 @@ class Grade {
 
   factory Grade.fromMap(Map<String, dynamic> map) {
     return Grade(
-      id: map['id'] as int?,
-      studentId: map['studentId'] as int,
-      examType: ExamTypeExt.fromString(map['examType'] as String),
-      score: double.tryParse(map['score'].toString()) ?? 0.0,
-      maxScore: double.tryParse(map['maxScore'].toString()) ?? 100.0,
-      examDate: map['examDate'] as String,
+      id: map['id'] != null ? (map['id'] as num).toInt() : null,
+      studentId: (map['studentId'] as num).toInt(),
+      examType: ExamTypeExt.fromString((map['examType'] ?? '').toString()),
+      score: double.tryParse((map['score'] ?? '0').toString()) ?? 0.0,
+      maxScore: double.tryParse((map['maxScore'] ?? '100').toString()) ?? 100.0,
+      examDate: (map['examDate'] ?? '').toString(),
       subject: map['subject'] as String?,
       notes: map['notes'] as String?,
     );
