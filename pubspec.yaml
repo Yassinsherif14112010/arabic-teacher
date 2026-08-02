@@ -35,8 +35,9 @@ dependencies:
   # Preferences (theme, teacher name)
   shared_preferences: ^2.3.2
 
-  # Icons
+  # Icons & core utilities (explicit for clean cloud/FlutLab resolution)
   cupertino_icons: ^1.0.8
+  async: ^2.11.0
 
 dev_dependencies:
   flutter_test:
