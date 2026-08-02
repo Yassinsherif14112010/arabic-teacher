@@ -34,11 +34,10 @@ void main() async {
     }
   }
 
-  // Prefer landscape on tablets
+  // Lock orientation strictly to landscape for tablets and web
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
-    DeviceOrientation.portraitUp,
   ]);
 
   runApp(const ArabicTeacherApp());
