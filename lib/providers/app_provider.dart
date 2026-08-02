@@ -28,7 +28,9 @@ class AppProvider extends ChangeNotifier {
   // ─── Getters ──────────────────────────────────────────────────────────────
   List<Student> get students => List.unmodifiable(_students);
   List<StudyGroup> get groups => List.unmodifiable(_groups);
-  List<Attendance> get todayAttendance => List.unmodifiable(_todayAttendance);
+  List<Attendance> get todayAttendance => List.unmodifiable(
+        _todayAttendance.where((a) => _students.any((s) => s.id == a.studentId)),
+      );
   List<Payment> get payments => List.unmodifiable(_payments);
   List<Grade> get grades => List.unmodifiable(_grades);
   List<FeeSetting> get feeSettings => List.unmodifiable(_feeSettings);
@@ -47,9 +49,9 @@ class AppProvider extends ChangeNotifier {
   int get activeStudents =>
       _students.where((s) => s.status == 'active').length;
   int get presentToday =>
-      _todayAttendance.where((a) => a.status == AttendanceStatus.present).length;
+      todayAttendance.where((a) => a.status == AttendanceStatus.present).length;
   int get lateToday =>
-      _todayAttendance.where((a) => a.status == AttendanceStatus.late).length;
+      todayAttendance.where((a) => a.status == AttendanceStatus.late).length;
   int get paidStudents => _students.where((s) => s.feePaid).length;
 
   int get attendanceRate {
@@ -72,11 +74,15 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> _enqueueSync(String entityName, String operation,
       String entityId, Map<String, dynamic> payload) async {
+    final map = Map<String, dynamic>.from(payload);
+    if (map['id'] == null && int.tryParse(entityId) != null) {
+      map['id'] = int.parse(entityId);
+    }
     await DatabaseService.enqueueSyncItem(
       entityName: entityName,
       operation: operation,
       entityId: entityId,
-      payload: jsonEncode(payload),
+      payload: jsonEncode(map),
     );
     await _refreshPendingSyncCount();
     // Fire-and-forget background sync if online
@@ -89,6 +95,8 @@ class AppProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
+      await SyncService.processSyncQueue();
+      await SyncService.pullFromSupabase();
       _students = await DatabaseService.getStudents();
       _groups = await DatabaseService.getGroups();
       _todayAttendance =
@@ -125,6 +133,8 @@ class AppProvider extends ChangeNotifier {
   Future<void> deleteStudent(int id) async {
     await DatabaseService.deleteStudent(id);
     _students = await DatabaseService.getStudents();
+    _todayAttendance = await DatabaseService.getAttendanceForDate(todayDateString);
+    _payments = await DatabaseService.getPayments();
     await _enqueueSync('students', 'DELETE', id.toString(), {'id': id});
     notifyListeners();
   }
@@ -201,6 +211,10 @@ class AppProvider extends ChangeNotifier {
 
   Future<List<Attendance>> getAttendanceForDate(String date) async {
     return DatabaseService.getAttendanceForDate(date);
+  }
+
+  Future<List<Attendance>> getAllAttendance() async {
+    return DatabaseService.getAllAttendance();
   }
 
   AttendanceStatus? getStudentStatusForDate(

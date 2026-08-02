@@ -34,7 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isTablet = size.shortestSide >= 600;
+    final isTablet = size.width >= 700;
     final padding = isTablet ? 28.0 : 16.0;
 
     if (app.loading) {
@@ -283,7 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   maxCrossAxisExtent: 280,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  mainAxisExtent: 100,
+                  mainAxisExtent: 120,
                 ),
                 itemCount: app.groups.length,
                 itemBuilder: (context, i) =>
@@ -427,6 +427,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: selectedGrade,
                   decoration:
                       const InputDecoration(labelText: 'الصف الدراسي'),
@@ -464,12 +465,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ? null
                       : scheduleCtrl.text.trim(),
                 );
+                if (ctx.mounted) Navigator.pop(ctx);
                 if (existing == null) {
                   await app.addGroup(group);
                 } else {
                   await app.updateGroup(group);
                 }
-                if (ctx.mounted) Navigator.pop(ctx);
               },
               child: const Text('حفظ'),
             ),
@@ -498,10 +499,12 @@ class _GroupTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.dividerColor),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
             children: [
               Expanded(
                 child: Text(
@@ -568,11 +571,12 @@ class _GroupTile extends StatelessWidget {
             ),
           ],
         ],
+        ),
       ),
     );
   }
 }
-
+ 
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;

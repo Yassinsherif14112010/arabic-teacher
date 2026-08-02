@@ -7,6 +7,8 @@ import '../theme/app_theme.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/confirm_dialog.dart';
 import 'students_screen.dart' show kGrades;
+import '../models/student.dart';
+import '../widgets/fee_payment_helper.dart';
 
 /// Payments screen — fee settings, payment records, filtering.
 class PaymentsScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class PaymentsScreen extends StatefulWidget {
 }
 
 class _PaymentsScreenState extends State<PaymentsScreen> {
+  int _selectedView = 0; // 0 = السداد السريع للطلاب, 1 = سجل الدفعات التفصيلي
   bool _showFeeSettings = false;
   bool _showAddForm = false;
   String _filterMonth = '';
@@ -27,7 +30,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isTablet = size.shortestSide >= 600;
+    final isTablet = size.width >= 700;
     final padding = isTablet ? 24.0 : 16.0;
 
     // Filter payments
@@ -61,7 +64,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   onPressed: () =>
                       setState(() => _showFeeSettings = !_showFeeSettings),
                   icon: const Icon(Icons.settings_outlined, size: 18),
-                  label: const Text('رسوم السنة'),
+                  label: const Text('المصاريف الشهرية'),
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
@@ -141,33 +144,75 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
               ),
             const SizedBox(height: 20),
 
-            // ── Filters ──────────────────────────────────────────────────
-            if (isTablet)
-              Row(
+            // ── View Switcher ─────────────────────────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.dividerColor),
+              ),
+              padding: const EdgeInsets.all(4),
+              child: Row(
                 children: [
-                  Expanded(child: _buildStudentFilter(app, theme)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildMonthFilter(theme)),
+                  Expanded(
+                    child: _ViewSwitchTab(
+                      label: 'السداد السريع لكل صف (بنقرة واحدة)',
+                      icon: Icons.check_circle_outline,
+                      isSelected: _selectedView == 0,
+                      onTap: () => setState(() => _selectedView = 0),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: _ViewSwitchTab(
+                      label: 'سجل الفواتير والدفعات السابقة',
+                      icon: Icons.history,
+                      isSelected: _selectedView == 1,
+                      onTap: () => setState(() => _selectedView = 1),
+                    ),
+                  ),
                 ],
-              )
-            else ...[
-              _buildStudentFilter(app, theme),
-              const SizedBox(height: 10),
-              _buildMonthFilter(theme),
-            ],
+              ),
+            ),
             const SizedBox(height: 20),
 
-            // ── Payments table ───────────────────────────────────────────
-            filtered.isEmpty
-                ? const EmptyState(
-                    icon: Icons.payments_outlined,
-                    message: 'لا توجد دفعات مسجلة',
-                  )
-                : _PaymentsTable(
-                    payments: filtered,
-                    app: app,
-                    isTablet: isTablet,
-                  ),
+            // ── Content depending on selected view ───────────────────────
+            if (_selectedView == 0)
+              _QuickGradePaymentsSection(
+                app: app,
+                onOpenSettings: () {
+                  setState(() => _showFeeSettings = true);
+                },
+              )
+            else ...[
+              // ── Filters ──────────────────────────────────────────────────
+              if (isTablet)
+                Row(
+                  children: [
+                    Expanded(child: _buildStudentFilter(app, theme)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildMonthFilter(theme)),
+                  ],
+                )
+              else ...[
+                _buildStudentFilter(app, theme),
+                const SizedBox(height: 10),
+                _buildMonthFilter(theme),
+              ],
+              const SizedBox(height: 20),
+
+              // ── Payments table ───────────────────────────────────────────
+              filtered.isEmpty
+                  ? const EmptyState(
+                      icon: Icons.payments_outlined,
+                      message: 'لا توجد دفعات مسجلة',
+                    )
+                  : _PaymentsTable(
+                      payments: filtered,
+                      app: app,
+                      isTablet: isTablet,
+                    ),
+            ],
           ],
         ),
       ),
@@ -176,12 +221,13 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
 
   Widget _buildStudentFilter(AppProvider app, ThemeData theme) {
     return DropdownButtonFormField<int?>(
+      isExpanded: true,
       initialValue: _filterStudentId,
       decoration: const InputDecoration(labelText: 'تصفية بالطالب'),
       items: [
-        const DropdownMenuItem(value: null, child: Text('كل الطلاب')),
+        const DropdownMenuItem(value: null, child: Text('كل الطلاب', overflow: TextOverflow.ellipsis)),
         ...app.students.map((s) =>
-            DropdownMenuItem(value: s.id, child: Text(s.name))),
+            DropdownMenuItem(value: s.id, child: Text(s.name, overflow: TextOverflow.ellipsis))),
       ],
       onChanged: (v) => setState(() => _filterStudentId = v),
     );
@@ -254,7 +300,7 @@ class _FeeSettingsPanelState extends State<_FeeSettingsPanel> {
                 const Icon(Icons.settings_outlined,
                     color: AppColors.orange, size: 20),
                 const SizedBox(width: 8),
-                Text('إعداد رسوم السنة الدراسية',
+                Text('إعداد قيمة المصاريف الشهرية لكل صف',
                     style: theme.textTheme.titleMedium?.copyWith(
                         color: AppColors.orange)),
               ],
@@ -268,18 +314,19 @@ class _FeeSettingsPanelState extends State<_FeeSettingsPanel> {
                   width: 160,
                   child: TextField(
                     decoration: const InputDecoration(
-                        labelText: 'السنة الدراسية'),
+                        labelText: 'الفترة / العام'),
                     controller: _yearCtrl,
                   ),
                 ),
                 SizedBox(
                   width: 220,
                   child: DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: _grade,
                     decoration: const InputDecoration(labelText: 'الصف'),
                     items: kGrades
                         .map((g) =>
-                            DropdownMenuItem(value: g, child: Text(g)))
+                            DropdownMenuItem(value: g, child: Text(g, overflow: TextOverflow.ellipsis)))
                         .toList(),
                     onChanged: (v) => setState(() => _grade = v!),
                   ),
@@ -318,7 +365,7 @@ class _FeeSettingsPanelState extends State<_FeeSettingsPanel> {
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: const [
-                    DataColumn(label: Text('السنة')),
+                    DataColumn(label: Text('الفترة / العام')),
                     DataColumn(label: Text('الصف')),
                     DataColumn(label: Text('المبلغ')),
                     DataColumn(label: Text('')),
@@ -432,14 +479,15 @@ class _AddPaymentFormState extends State<_AddPaymentForm> {
                 SizedBox(
                   width: 240,
                   child: DropdownButtonFormField<int?>(
+                    isExpanded: true,
                     initialValue: _studentId,
                     decoration:
                         const InputDecoration(labelText: 'الطالب *'),
                     items: [
                       const DropdownMenuItem(
-                          value: null, child: Text('اختر الطالب')),
+                          value: null, child: Text('اختر الطالب', overflow: TextOverflow.ellipsis)),
                       ...app.students.map((s) => DropdownMenuItem(
-                          value: s.id, child: Text(s.name))),
+                          value: s.id, child: Text(s.name, overflow: TextOverflow.ellipsis))),
                     ],
                     onChanged: (v) => setState(() => _studentId = v),
                   ),
@@ -464,12 +512,13 @@ class _AddPaymentFormState extends State<_AddPaymentForm> {
                 SizedBox(
                   width: 180,
                   child: DropdownButtonFormField<PaymentMethod>(
+                    isExpanded: true,
                     initialValue: _method,
                     decoration:
                         const InputDecoration(labelText: 'طريقة الدفع'),
                     items: PaymentMethod.values
                         .map((m) => DropdownMenuItem(
-                            value: m, child: Text(m.label)))
+                            value: m, child: Text(m.label, overflow: TextOverflow.ellipsis)))
                         .toList(),
                     onChanged: (v) => setState(() => _method = v!),
                   ),
@@ -702,3 +751,368 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
+
+// ─── View Switcher Tab ────────────────────────────────────────────────────────
+
+class _ViewSwitchTab extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ViewSwitchTab({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = isSelected ? AppColors.orange : theme.colorScheme.onSurface.withAlpha(150);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.orange.withAlpha(25) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isSelected ? AppColors.orange : Colors.transparent),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Quick Grade Payments Section ──────────────────────────────────────────────
+
+class _QuickGradePaymentsSection extends StatelessWidget {
+  final AppProvider app;
+  final VoidCallback onOpenSettings;
+
+  const _QuickGradePaymentsSection({
+    required this.app,
+    required this.onOpenSettings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (app.students.isEmpty) {
+      return const EmptyState(
+        icon: Icons.people_outline,
+        message: 'لا يوجد طلاب مسجلون لعرض قائمة سداد الرسوم.',
+      );
+    }
+
+    // Group students by grade
+    final byGrade = <String, List<Student>>{};
+    for (final s in app.students) {
+      final g = s.grade ?? 'بدون صف';
+      byGrade.putIfAbsent(g, () => []).add(s);
+    }
+
+    final gradeOrder = [
+      ...kGrades.where((g) => byGrade.containsKey(g)),
+      if (byGrade.containsKey('بدون صف')) 'بدون صف',
+      ...byGrade.keys.where((k) => !kGrades.contains(k) && k != 'بدون صف'),
+    ];
+
+    return Column(
+      children: gradeOrder.map((grade) {
+        final gradeStudents = byGrade[grade]!..sort((a, b) => a.name.compareTo(b.name));
+        FeeSetting? feeSetting;
+        for (final fs in app.feeSettings) {
+          if (fs.grade == grade && fs.feeAmount > 0) {
+            feeSetting = fs;
+            break;
+          }
+        }
+        return _GradePaymentsCard(
+          grade: grade,
+          students: gradeStudents,
+          feeSetting: feeSetting,
+          app: app,
+          onOpenSettings: onOpenSettings,
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _GradePaymentsCard extends StatelessWidget {
+  final String grade;
+  final List<Student> students;
+  final FeeSetting? feeSetting;
+  final AppProvider app;
+  final VoidCallback onOpenSettings;
+
+  const _GradePaymentsCard({
+    required this.grade,
+    required this.students,
+    required this.feeSetting,
+    required this.app,
+    required this.onOpenSettings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final paidCount = students.where((s) => s.feePaid).length;
+    final unpaidCount = students.length - paidCount;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        child: Column(
+          children: [
+            // Grade header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.orange.withAlpha(26),
+                    AppColors.orange.withAlpha(13),
+                  ],
+                  begin: Alignment.centerRight,
+                  end: Alignment.centerLeft,
+                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                border: const Border(
+                  right: BorderSide(color: AppColors.orange, width: 4),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Text(grade, style: theme.textTheme.titleMedium),
+                        const SizedBox(width: 8),
+                        Text('(${students.length} طالب)', style: theme.textTheme.bodySmall),
+                      ],
+                    ),
+                  ),
+                  // Fee amount indicator or warning
+                  GestureDetector(
+                    onTap: feeSetting == null ? onOpenSettings : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: (feeSetting != null ? AppColors.emerald : AppColors.red).withAlpha(26),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: feeSetting != null ? AppColors.emerald : AppColors.red),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            feeSetting != null ? Icons.payments : Icons.warning_amber_rounded,
+                            size: 15,
+                            color: feeSetting != null ? AppColors.emerald : AppColors.red,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            feeSetting != null
+                                ? 'المصاريف الشهرية: ${feeSetting!.feeAmount.toStringAsFixed(0)} ج.م'
+                                : '⚠️ لم تحدد المصاريف الشهرية للصف (اضغط للتحديد)',
+                            style: TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: feeSetting != null ? AppColors.emerald : AppColors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _MiniPayStat(count: paidCount, label: 'دفع:', color: AppColors.emerald),
+                  const SizedBox(width: 6),
+                  _MiniPayStat(count: unpaidCount, label: 'لم يدفع:', color: AppColors.red),
+                ],
+              ),
+            ),
+
+            // Student rows
+            ...students.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final student = entry.value;
+              return _PaymentStudentRow(
+                index: idx + 1,
+                student: student,
+                app: app,
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniPayStat extends StatelessWidget {
+  final int count;
+  final String label;
+  final Color color;
+
+  const _MiniPayStat({required this.count, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withAlpha(26),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        '$label $count',
+        style: TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentStudentRow extends StatelessWidget {
+  final int index;
+  final Student student;
+  final AppProvider app;
+
+  const _PaymentStudentRow({
+    required this.index,
+    required this.student,
+    required this.app,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isPaid = student.feePaid;
+
+    return Container(
+      color: isPaid ? AppColors.emerald.withAlpha(13) : AppColors.red.withAlpha(8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          // Index avatar
+          SizedBox(
+            width: 36,
+            child: CircleAvatar(
+              radius: 14,
+              backgroundColor: theme.colorScheme.primary.withAlpha(26),
+              child: Text(
+                '$index',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Name & Barcode
+          Expanded(
+            child: Row(
+              children: [
+                Text(
+                  student.name,
+                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  '#${student.barcodeNumber}',
+                  style: theme.textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
+                ),
+              ],
+            ),
+          ),
+
+          // Status badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: (isPaid ? AppColors.emerald : AppColors.red).withAlpha(40),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: (isPaid ? AppColors.emerald : AppColors.red).withAlpha(100)),
+            ),
+            child: Text(
+              isPaid ? 'مدفوعة ✓' : 'غير مدفوعة',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: isPaid ? AppColors.emerald : AppColors.red,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+
+          // Action Button (Identical style to Attendance Quick Buttons)
+          Tooltip(
+            message: isPaid ? 'اضغط لإلغاء السداد' : 'اضغط لتسجيل السداد فوراً',
+            child: GestureDetector(
+              onTap: () => toggleStudentFeeStatus(context, app, student),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isPaid ? AppColors.emerald : AppColors.orange.withAlpha(35),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: isPaid ? AppColors.emerald : AppColors.orange),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isPaid ? Icons.check_circle : Icons.payment,
+                      color: isPaid ? Colors.white : AppColors.orange,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isPaid ? 'مسجل كدفع' : 'تأكيد الدفع',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: isPaid ? Colors.white : AppColors.orange,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

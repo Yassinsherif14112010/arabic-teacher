@@ -8,6 +8,8 @@ import '../theme/app_theme.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/motion/staggered_list_item.dart';
+import '../services/print_service.dart';
+import '../widgets/fee_payment_helper.dart';
 
 const List<String> kGrades = [
   'الصف الأول الإعدادي',
@@ -35,7 +37,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isTablet = size.shortestSide >= 600;
+    final isTablet = size.width >= 700;
 
     // Filter
     final filtered = app.students.where((s) {
@@ -226,14 +228,15 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     ),
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String?>(
+                      isExpanded: true,
                       initialValue: selectedGrade,
                       decoration:
                           const InputDecoration(labelText: 'الصف الدراسي'),
                       items: [
                         const DropdownMenuItem(
-                            value: null, child: Text('اختر الصف')),
+                            value: null, child: Text('اختر الصف', overflow: TextOverflow.ellipsis)),
                         ...kGrades.map((g) =>
-                            DropdownMenuItem(value: g, child: Text(g))),
+                            DropdownMenuItem(value: g, child: Text(g, overflow: TextOverflow.ellipsis))),
                       ],
                       onChanged: (v) => setDialogState(() {
                         selectedGrade = v;
@@ -243,14 +246,15 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     if (selectedGrade != null) ...[
                       const SizedBox(height: 14),
                       DropdownButtonFormField<int?>(
+                        isExpanded: true,
                         initialValue: selectedGroupId,
                         decoration: const InputDecoration(
                             labelText: 'المجموعة الدراسية'),
                         items: [
                           const DropdownMenuItem(
-                              value: null, child: Text('بدون مجموعة')),
+                              value: null, child: Text('بدون مجموعة', overflow: TextOverflow.ellipsis)),
                           ...groupsForGrade.map((g) => DropdownMenuItem(
-                              value: g.id, child: Text(g.name))),
+                              value: g.id, child: Text(g.name, overflow: TextOverflow.ellipsis))),
                         ],
                         onChanged: (v) =>
                             setDialogState(() => selectedGroupId = v),
@@ -292,12 +296,12 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     groupId: selectedGroupId,
                     feePaid: feePaid,
                   );
+                  if (ctx.mounted) Navigator.pop(ctx);
                   if (existing == null) {
                     await app.addStudent(student);
                   } else {
                     await app.updateStudent(student);
                   }
-                  if (ctx.mounted) Navigator.pop(ctx);
                 },
                 child: const Text('حفظ'),
               ),
@@ -353,24 +357,26 @@ class _GradeSection extends StatelessWidget {
                       color: theme.colorScheme.primary, width: 4),
                 ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(grade,
-                        style: theme.textTheme.titleMedium),
-                  ),
-                  _Pill(
-                      label: 'دفع: $paid',
-                      color: AppColors.emerald),
-                  const SizedBox(width: 8),
-                  _Pill(
-                      label: 'لم يدفع: $unpaid',
-                      color: AppColors.red),
-                  const SizedBox(width: 8),
-                  _Pill(
-                      label: '${students.length} طالب',
-                      color: AppColors.primary),
-                ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    Text(grade, style: theme.textTheme.titleMedium),
+                    const SizedBox(width: 16),
+                    _Pill(
+                        label: 'دفع: $paid',
+                        color: AppColors.emerald),
+                    const SizedBox(width: 8),
+                    _Pill(
+                        label: 'لم يدفع: $unpaid',
+                        color: AppColors.red),
+                    const SizedBox(width: 8),
+                    _Pill(
+                        label: '${students.length} طالب',
+                        color: AppColors.primary),
+                  ],
+                ),
               ),
             ),
 
@@ -444,6 +450,8 @@ class _StudentRow extends StatelessWidget {
               flex: 3,
               child: Text(
                 student.name,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
                 style: theme.textTheme.bodyMedium
                     ?.copyWith(fontWeight: FontWeight.w600),
               ),
@@ -463,10 +471,73 @@ class _StudentRow extends StatelessWidget {
               ),
             ],
 
+            // Study Group Selector Dropdown
+            Expanded(
+              flex: 2,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: theme.colorScheme.primary.withAlpha(50)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int?>(
+                    value: app.groups
+                            .where((g) => g.grade == (student.grade ?? ''))
+                            .any((g) => g.id == student.groupId)
+                        ? student.groupId
+                        : null,
+                    isExpanded: true,
+                    icon: Icon(Icons.group_work_outlined, size: 16, color: theme.colorScheme.primary),
+                    hint: Text(
+                      'اختر مجموعة...',
+                      style: TextStyle(fontFamily: 'Cairo', fontSize: 12, color: theme.colorScheme.primary),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text(
+                          'بدون مجموعة',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      ...app.groups
+                          .where((g) => g.grade == (student.grade ?? ''))
+                          .map((g) => DropdownMenuItem<int?>(
+                                value: g.id,
+                                child: Text(
+                                  g.name,
+                                  style: const TextStyle(fontFamily: 'Cairo', fontSize: 13, fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              )),
+                    ],
+                    onChanged: (newGroupId) async {
+                      await app.updateStudent(student.copyWith(groupId: newGroupId));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'تم تغيير مجموعة الطالب (${student.name}) بنجاح ✓',
+                              style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                            ),
+                            backgroundColor: AppColors.emerald,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ),
+
             // Fee status toggle
             GestureDetector(
-              onTap: () => app.updateStudent(
-                  student.copyWith(feePaid: !student.feePaid)),
+              onTap: () => toggleStudentFeeStatus(context, app, student),
               child: Icon(
                 student.feePaid
                     ? Icons.check_circle
@@ -677,27 +748,85 @@ class _BarcodeCardOverlay extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // Barcode
-                      BarcodeWidget(
-                        barcode: Barcode.code128(),
-                        data: student.barcodeNumber,
-                        width: 280,
-                        height: 80,
-                        drawText: true,
-                        style: const TextStyle(
-                          fontFamily: 'Cairo',
-                          fontSize: 12,
+                      // Barcode inside white rectangle for maximum scanner contrast
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 18, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border:
+                              Border.all(color: Colors.grey.shade300, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: BarcodeWidget(
+                            barcode: Barcode.code128(),
+                            data: student.barcodeNumber,
+                            width: 250,
+                            height: 75,
+                            drawText: true,
+                            color: Colors.black,
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 22),
 
-                      // Close button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: onClose,
-                          child: const Text('إغلاق'),
-                        ),
+                      // Print and Close buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                PrintService.printStudentCard(
+                                  student.name,
+                                  student.grade ?? '—',
+                                  student.barcodeNumber,
+                                );
+                              },
+                              icon: const Icon(Icons.print_outlined, size: 20),
+                              label: const Text('طباعة الباركود'),
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                textStyle: const TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: OutlinedButton(
+                              onPressed: onClose,
+                              style: OutlinedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              child: const Text('إغلاق',
+                                  style: TextStyle(
+                                      fontFamily: 'Cairo',
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

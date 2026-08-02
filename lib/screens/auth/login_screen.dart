@@ -6,7 +6,6 @@ import '../../theme/app_theme.dart';
 import 'registration_screen.dart';
 import 'password_reset_dialog.dart';
 
-/// Enterprise secure login screen featuring responsive RTL design and sleek glassmorphism animation.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -18,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
+  bool _rememberMe = true;
 
   @override
   void dispose() {
@@ -28,11 +28,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submit() async {
     final auth = context.read<AuthProvider>();
-    final success = await auth.login(_emailCtrl.text, _passwordCtrl.text);
+    final success = await auth.login(
+      _emailCtrl.text.trim(),
+      _passwordCtrl.text,
+      rememberMe: _rememberMe,
+    );
     if (!success && auth.errorMessage != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(auth.errorMessage!, style: const TextStyle(color: Colors.white)),
+          content: Text(auth.errorMessage!, style: const TextStyle(fontFamily: 'Cairo', color: Colors.white, fontWeight: FontWeight.bold)),
           backgroundColor: AppColors.red,
           behavior: SnackBarBehavior.floating,
         ),
@@ -43,187 +47,191 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final size = MediaQuery.of(context).size;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF090D16)],
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-            ),
-          ),
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Container(
-                width: size.width > 500 ? 450 : double.infinity,
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B).withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      blurRadius: 30,
-                      offset: const Offset(0, 15),
-                    ),
-                  ],
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0D1526) : const Color(0xFFF8FAFC),
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 440),
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  width: 1,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 2.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.35),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+                    blurRadius: 30,
+                    offset: const Offset(0, 15),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header icon
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.lock_person_rounded,
+                      size: 36,
+                      color: AppColors.primary,
+                    ),
+                  ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
+                  const SizedBox(height: 20),
+                  Text(
+                    'تسجيل الدخول',
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'منصة الشاعر في اللغة العربية - أ. محسن شاكر',
+                    style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontSize: 14,
+                      color: isDark ? Colors.white60 : Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Email field
+                  TextField(
+                    controller: _emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    style: TextStyle(fontFamily: 'Cairo', color: isDark ? Colors.white : Colors.black87),
+                    decoration: InputDecoration(
+                      labelText: 'البريد الإلكتروني',
+                      labelStyle: const TextStyle(fontFamily: 'Cairo'),
+                      prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Password field
+                  TextField(
+                    controller: _passwordCtrl,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _submit(),
+                    style: TextStyle(fontFamily: 'Cairo', color: isDark ? Colors.white : Colors.black87),
+                    decoration: InputDecoration(
+                      labelText: 'كلمة المرور',
+                      labelStyle: const TextStyle(fontFamily: 'Cairo'),
+                      prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Remember me & Forgot Password Row
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _rememberMe,
+                        onChanged: (val) => setState(() => _rememberMe = val ?? true),
+                        activeColor: AppColors.emerald,
+                      ),
+                      GestureDetector(
+                        onTap: () => setState(() => _rememberMe = !_rememberMe),
+                        child: Text(
+                          'تذكرني على هذا الجهاز',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 13,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                            fontWeight: FontWeight.w600,
                           ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Image.asset('assets/logo.jpg', fit: BoxFit.cover),
-                      ),
-                    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'الشاعر في اللغة العربية',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'بوابة تسجيل الدخول الآمنة (Enterprise Auth)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    TextField(
-                      controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      textDirection: TextDirection.ltr,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        labelText: 'البريد الإلكتروني',
-                        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
-                        prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
-                        filled: true,
-                        fillColor: const Color(0xFF0F172A),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passwordCtrl,
-                      obscureText: _obscurePassword,
-                      textDirection: TextDirection.ltr,
-                      style: const TextStyle(color: Colors.white),
-                      onSubmitted: (_) => _submit(),
-                      decoration: InputDecoration(
-                        labelText: 'كلمة المرور',
-                        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
-                        prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.white.withValues(alpha: 0.6),
-                          ),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFF0F172A),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        onPressed: () => showDialog(
-                          context: context,
-                          builder: (_) => const PasswordResetDialog(),
-                        ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => const PasswordResetDialog(),
+                          );
+                        },
                         child: const Text(
                           'نسيت كلمة المرور؟',
-                          style: TextStyle(color: AppColors.emerald),
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.orange),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: auth.isLoading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 6,
-                        ),
-                        child: auth.isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2.5,
-                                ),
-                              )
-                            : const Text(
-                                'تسجيل الدخول',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Login Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: auth.isLoading ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
+                      child: auth.isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                            )
+                          : const Text(
+                              'دخول المنصة',
+                              style: TextStyle(fontFamily: 'Cairo', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
                     ),
-                    const SizedBox(height: 20),
-                    Divider(color: Colors.white.withValues(alpha: 0.15)),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'ليس لديك حساب معلم بَعد؟',
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).push(
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Register link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'ليس لديك حساب مسؤول بعد؟',
+                        style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: isDark ? Colors.white60 : Colors.black54),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const RegistrationScreen()),
-                          ),
-                          child: const Text(
-                            'إنشاء حساب جديد',
-                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                          ),
+                          );
+                        },
+                        child: const Text(
+                          'إنشاء حساب جديد',
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.emerald),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

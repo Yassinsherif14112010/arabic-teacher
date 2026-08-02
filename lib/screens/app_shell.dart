@@ -10,8 +10,6 @@ import 'attendance_screen.dart';
 import 'payments_screen.dart';
 import 'exams_screen.dart';
 import 'auth/security_settings_dialog.dart';
-import '../widgets/motion/premium_interactive_widget.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 /// Navigation destination descriptor.
 class _NavItem {
@@ -114,8 +112,7 @@ class _TabletLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final sidebarBg =
-        isDark ? AppColors.darkSidebar : AppColors.lightSidebar;
+    final sidebarBg = isDark ? AppColors.darkSidebar : AppColors.lightSidebar;
 
     return Scaffold(
       body: Row(
@@ -169,8 +166,7 @@ class _PhoneLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final sidebarBg =
-        isDark ? AppColors.darkSidebar : AppColors.lightSidebar;
+    final sidebarBg = isDark ? AppColors.darkSidebar : AppColors.lightSidebar;
 
     return Scaffold(
       appBar: AppBar(
@@ -266,9 +262,8 @@ class _Sidebar extends StatelessWidget {
                             fontFamily: 'Cairo',
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF0F172A),
                           ),
                         ),
                         Text(
@@ -292,8 +287,7 @@ class _Sidebar extends StatelessWidget {
             // ── Teacher info ──────────────────────────────────────────────
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withAlpha(13)
@@ -329,9 +323,8 @@ class _Sidebar extends StatelessWidget {
                             fontFamily: 'Cairo',
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF0F172A),
                           ),
                         ),
                         Text(
@@ -348,7 +341,7 @@ class _Sidebar extends StatelessWidget {
                     ),
                   ),
                   // Security / Audit Log button
-                  PremiumInteractiveWidget(
+                  GestureDetector(
                     onTap: () => showDialog(
                       context: context,
                       builder: (_) => const SecuritySettingsDialog(),
@@ -370,7 +363,7 @@ class _Sidebar extends StatelessWidget {
                     ),
                   ),
                   // Theme toggle
-                  PremiumInteractiveWidget(
+                  GestureDetector(
                     onTap: themeProvider.toggle,
                     child: Container(
                       padding: const EdgeInsets.all(6),
@@ -384,11 +377,10 @@ class _Sidebar extends StatelessWidget {
                         themeProvider.isDark
                             ? Icons.light_mode_outlined
                             : Icons.dark_mode_outlined,
-                        color: isDark
-                            ? Colors.white70
-                            : const Color(0xFF334155),
+                        color:
+                            isDark ? Colors.white70 : const Color(0xFF334155),
                         size: 18,
-                      ).animate(target: themeProvider.isDark ? 1 : 0).rotate(begin: 0.0, end: 0.5, duration: const Duration(milliseconds: 350), curve: Curves.easeOutBack),
+                      ),
                     ),
                   ),
                 ],
@@ -397,7 +389,8 @@ class _Sidebar extends StatelessWidget {
 
             const SizedBox(height: 16),
             Divider(
-              color: isDark ? Colors.white.withAlpha(26) : AppColors.lightBorder,
+              color:
+                  isDark ? Colors.white.withAlpha(26) : AppColors.lightBorder,
               height: 1,
             ),
             const SizedBox(height: 8),
@@ -427,13 +420,18 @@ class _Sidebar extends StatelessWidget {
                   final pending = app.pendingSyncCount;
                   final status = app.syncStatus;
                   IconData icon = Icons.cloud_done;
-                  Color color = isDark ? Colors.greenAccent : const Color(0xFF059669);
+                  Color color =
+                      isDark ? Colors.greenAccent : const Color(0xFF059669);
                   String label = 'مُزامن مع السحابة';
 
-                  if (status == SyncStatus.offline || !SyncService.isConfigured) {
+                  if (status == SyncStatus.offline ||
+                      !SyncService.isConfigured) {
                     icon = Icons.cloud_off;
-                    color = isDark ? Colors.orangeAccent : const Color(0xFFEA580C);
-                    label = pending > 0 ? 'أوفلاين ($pending معلقة)' : 'أوفلاين (SQLite)';
+                    color =
+                        isDark ? Colors.orangeAccent : const Color(0xFFEA580C);
+                    label = pending > 0
+                        ? 'أوفلاين ($pending معلقة)'
+                        : 'أوفلاين (SQLite)';
                   } else if (status == SyncStatus.syncing) {
                     icon = Icons.sync;
                     color = isDark ? Colors.blueAccent : AppColors.primaryDark;
@@ -500,19 +498,15 @@ class _NavTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
-      child: PremiumInteractiveWidget(
-        onTap: onTap,
-        enableHoverGlow: true,
-        child: Material(
-          color: Colors.transparent,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: onTap,
-            child: AnimatedContainer(
+          onTap: onTap,
+          child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: isActive
@@ -541,13 +535,10 @@ class _NavTile extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 14,
-                      fontWeight:
-                          isActive ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                       color: isActive
                           ? (isDark ? Colors.white : AppColors.primaryDark)
-                          : (isDark
-                              ? Colors.white60
-                              : const Color(0xFF475569)),
+                          : (isDark ? Colors.white60 : const Color(0xFF475569)),
                     ),
                   ),
                 ),
@@ -566,7 +557,6 @@ class _NavTile extends StatelessWidget {
             ),
           ),
         ),
-      ),
       ),
     );
   }

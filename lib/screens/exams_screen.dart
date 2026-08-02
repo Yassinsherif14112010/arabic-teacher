@@ -30,7 +30,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isTablet = size.shortestSide >= 600;
+    final isTablet = size.width >= 700;
     final padding = isTablet ? 24.0 : 16.0;
 
     // Filter students by grade
@@ -133,11 +133,12 @@ class _ExamsScreenState extends State<ExamsScreen> {
 
   Widget _buildGradeFilter(ThemeData theme) {
     return DropdownButtonFormField<String?>(
+      isExpanded: true,
       initialValue: _filterGrade.isEmpty ? null : _filterGrade,
       decoration: const InputDecoration(labelText: 'تصفية بالصف'),
       items: [
-        const DropdownMenuItem(value: null, child: Text('كل الصفوف')),
-        ...kGrades.map((g) => DropdownMenuItem(value: g, child: Text(g))),
+        const DropdownMenuItem(value: null, child: Text('كل الصفوف', overflow: TextOverflow.ellipsis)),
+        ...kGrades.map((g) => DropdownMenuItem(value: g, child: Text(g, overflow: TextOverflow.ellipsis))),
       ],
       onChanged: (v) => setState(() {
         _filterGrade = v ?? '';
@@ -150,16 +151,17 @@ class _ExamsScreenState extends State<ExamsScreen> {
   Widget _buildStudentSelector(
       List<Student> students, ThemeData theme) {
     return DropdownButtonFormField<Student?>(
+      isExpanded: true,
       initialValue: _selectedStudent,
       decoration:
           const InputDecoration(labelText: 'عرض درجات طالب'),
       items: [
         const DropdownMenuItem(
-            value: null, child: Text('اختر طالب لعرض درجاته')),
+            value: null, child: Text('اختر طالب لعرض درجاته', overflow: TextOverflow.ellipsis)),
         ...students.map((s) => DropdownMenuItem(
             value: s,
             child: Text(
-                '${s.name}${s.grade != null ? ' (${s.grade})' : ''}'))),
+                '${s.name}${s.grade != null ? ' (${s.grade})' : ''}', overflow: TextOverflow.ellipsis))),
       ],
       onChanged: (v) async {
         setState(() {
@@ -173,12 +175,13 @@ class _ExamsScreenState extends State<ExamsScreen> {
 
   Widget _buildTypeFilter(ThemeData theme) {
     return DropdownButtonFormField<ExamType?>(
+      isExpanded: true,
       initialValue: _filterType,
       decoration: const InputDecoration(labelText: 'نوع الامتحان'),
       items: [
-        const DropdownMenuItem(value: null, child: Text('كل الأنواع')),
+        const DropdownMenuItem(value: null, child: Text('كل الأنواع', overflow: TextOverflow.ellipsis)),
         ...ExamType.values.map((t) =>
-            DropdownMenuItem(value: t, child: Text(t.label))),
+            DropdownMenuItem(value: t, child: Text(t.label, overflow: TextOverflow.ellipsis))),
       ],
       onChanged: (v) => setState(() => _filterType = v),
     );
@@ -399,6 +402,7 @@ class _AddGradeFormState extends State<_AddGradeForm> {
                 SizedBox(
                   width: 240,
                   child: DropdownButtonFormField<int?>(
+                    isExpanded: true,
                     initialValue: _studentId,
                     decoration:
                         const InputDecoration(labelText: 'الطالب *'),
@@ -408,7 +412,9 @@ class _AddGradeFormState extends State<_AddGradeForm> {
                       ...app.students.map((s) => DropdownMenuItem(
                           value: s.id,
                           child: Text(
-                              '${s.name}${s.grade != null ? ' (${s.grade})' : ''}'))),
+                            '${s.name}${s.grade != null ? ' (${s.grade})' : ''}',
+                            overflow: TextOverflow.ellipsis,
+                          ))),
                     ],
                     onChanged: (v) => setState(() => _studentId = v),
                   ),
@@ -416,12 +422,13 @@ class _AddGradeFormState extends State<_AddGradeForm> {
                 SizedBox(
                   width: 160,
                   child: DropdownButtonFormField<ExamType>(
+                    isExpanded: true,
                     initialValue: _examType,
                     decoration:
                         const InputDecoration(labelText: 'نوع الامتحان'),
                     items: ExamType.values
                         .map((t) => DropdownMenuItem(
-                            value: t, child: Text(t.label)))
+                            value: t, child: Text(t.label, overflow: TextOverflow.ellipsis)))
                         .toList(),
                     onChanged: (v) => setState(() => _examType = v!),
                   ),

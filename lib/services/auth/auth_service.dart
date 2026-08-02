@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../sync_service.dart';
 import '../database_service.dart';
@@ -26,6 +27,13 @@ class AuthService {
   /// Restores saved user session on startup without exposing tokens.
   static Future<bool> restoreSession() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final rememberEnabled = prefs.getBool('remember_me_enabled') ?? true;
+      if (!rememberEnabled) {
+        _currentEmail = null;
+        return false;
+      }
+
       // 1. Check if Supabase client has an active cloud session
       if (SyncService.isConfigured && Supabase.instance.client.auth.currentSession != null) {
         _currentEmail = Supabase.instance.client.auth.currentUser?.email;
@@ -36,8 +44,8 @@ class AuthService {
         return true;
       }
 
-      // 2. Fallback to encrypted secure local storage session
-      final storedEmail = await _storage.read(key: _kSessionEmailKey);
+      // 2. Fallback to encrypted secure local storage session or remember me email
+      final storedEmail = prefs.getString('remember_me_email') ?? await _storage.read(key: _kSessionEmailKey);
       if (storedEmail != null && storedEmail.isNotEmpty) {
         _currentEmail = storedEmail;
         await DatabaseService.logAuthEvent(
@@ -53,7 +61,7 @@ class AuthService {
   }
 
   /// Secure login implementation handling rate limiting, lockout, and generic error sanitization.
-  static Future<void> login({required String rawEmail, required String rawPassword}) async {
+  static Future<void> login({required String rawEmail, required String rawPassword, bool rememberMe = true}) async {
     final email = AuthValidator.normalizeAndValidateEmail(rawEmail);
     if (email == null || rawPassword.isEmpty) {
       throw const AuthException('تنسيق البريد الإلكتروني أو كلمة المرور غير صحيح.');
@@ -100,7 +108,15 @@ class AuthService {
         _currentEmail = email;
       }
 
-      await _storage.write(key: _kSessionEmailKey, value: email);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('remember_me_enabled', rememberMe);
+      if (rememberMe) {
+        await prefs.setString('remember_me_email', email);
+        await _storage.write(key: _kSessionEmailKey, value: email);
+      } else {
+        await prefs.remove('remember_me_email');
+        await _storage.delete(key: _kSessionEmailKey);
+      }
       await AuthRateLimiter.recordSuccessfulLogin(email);
     } on AuthException catch (e) {
       await AuthRateLimiter.recordFailedLogin(email);
@@ -183,6 +199,9 @@ class AuthService {
       }
     } catch (_) {}
     
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('remember_me_enabled');
+    await prefs.remove('remember_me_email');
     await _storage.delete(key: _kSessionEmailKey);
     _currentEmail = null;
     await DatabaseService.logAuthEvent(

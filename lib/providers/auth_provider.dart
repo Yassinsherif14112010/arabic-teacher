@@ -1,85 +1,77 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../services/auth/auth_service.dart';
 
-/// State management provider for user sessions, auth workflows, and feedback errors.
 class AuthProvider extends ChangeNotifier {
-  bool _isLoading = false;
   bool _isInitialized = false;
+  bool _isLoading = false;
   String? _errorMessage;
 
-  bool get isLoading => _isLoading;
   bool get isInitialized => _isInitialized;
+  bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  String? get currentEmail => AuthService.currentUserEmail;
   bool get isAuthenticated => AuthService.isLoggedIn;
+  String? get currentEmail => AuthService.currentUserEmail;
 
   Future<void> init() async {
     _isLoading = true;
     notifyListeners();
-    await AuthService.restoreSession();
+    try {
+      await AuthService.restoreSession();
+    } catch (_) {}
     _isInitialized = true;
     _isLoading = false;
     notifyListeners();
   }
 
-  Future<bool> login(String email, String password) async {
-    _setLoading(true);
+  Future<bool> login(String email, String password, {bool rememberMe = true}) async {
+    _isLoading = true;
     _errorMessage = null;
+    notifyListeners();
     try {
-      await AuthService.login(rawEmail: email, rawPassword: password);
-      _setLoading(false);
+      await AuthService.login(rawEmail: email, rawPassword: password, rememberMe: rememberMe);
+      _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
-      _setLoading(false);
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
       return false;
     }
   }
 
   Future<bool> register(String email, String password, String confirmPassword) async {
-    _setLoading(true);
+    _isLoading = true;
     _errorMessage = null;
+    notifyListeners();
     try {
       await AuthService.register(rawEmail: email, rawPassword: password, confirmPassword: confirmPassword);
-      _setLoading(false);
+      _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
-      _setLoading(false);
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
       return false;
     }
   }
 
   Future<void> logout() async {
-    _setLoading(true);
+    _isLoading = true;
+    notifyListeners();
     await AuthService.logout();
-    _setLoading(false);
+    _isLoading = false;
     notifyListeners();
   }
 
-  Future<bool> requestPasswordReset(String email) async {
-    _setLoading(true);
-    _errorMessage = null;
+  Future<void> requestPasswordReset(String email) async {
+    _isLoading = true;
+    notifyListeners();
     try {
       await AuthService.requestPasswordReset(email);
-      _setLoading(false);
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
-      _setLoading(false);
-      return false;
-    }
-  }
-
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
-  }
-
-  void _setLoading(bool val) {
-    _isLoading = val;
+    } catch (_) {}
+    _isLoading = false;
     notifyListeners();
   }
 }

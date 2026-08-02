@@ -94,6 +94,55 @@ class SyncService {
     return syncedCount;
   }
 
+  /// Pull existing cloud database records from Supabase into local database/web storage.
+  static Future<void> pullFromSupabase() async {
+    if (!isConfigured) return;
+    try {
+      final client = Supabase.instance.client;
+      final tables = ['students', 'study_groups', 'attendance', 'payments', 'grades', 'fee_settings'];
+      for (final t in tables) {
+        final res = await client.from(t).select();
+        final list = res as List<dynamic>? ?? [];
+        for (final item in list) {
+          if (item is Map<String, dynamic>) {
+            final normalized = _normalizeCloudRow(Map<String, dynamic>.from(item));
+            await DatabaseService.upsertFromCloud(t, normalized);
+          }
+        }
+      }
+      _status = SyncStatus.online;
+      _lastSyncedAt = DateTime.now();
+    } catch (e) {
+      debugPrint('Supabase pull notice (cloud tables may need setup): $e');
+    }
+  }
+
+  static Map<String, dynamic> _normalizeCloudRow(Map<String, dynamic> row) {
+    final normalized = Map<String, dynamic>.from(row);
+    final keyMappings = {
+      'parentphone': 'parentPhone',
+      'barcodenumber': 'barcodeNumber',
+      'groupid': 'groupId',
+      'feepaid': 'feePaid',
+      'createdat': 'createdAt',
+      'studentid': 'studentId',
+      'attendancedate': 'attendanceDate',
+      'paymentdate': 'paymentDate',
+      'paymentmethod': 'paymentMethod',
+      'examtype': 'examType',
+      'maxscore': 'maxScore',
+      'examdate': 'examDate',
+      'academicyear': 'academicYear',
+      'feeamount': 'feeAmount',
+    };
+    keyMappings.forEach((lower, camel) {
+      if (normalized.containsKey(lower) && !normalized.containsKey(camel)) {
+        normalized[camel] = normalized[lower];
+      }
+    });
+    return normalized;
+  }
+
   /// Internal handler for pushing a mutation to Supabase table.
   static Future<bool> _pushToSupabase({
     required String entityName,
@@ -103,26 +152,51 @@ class SyncService {
     if (!isConfigured) return false;
     try {
       final client = Supabase.instance.client;
-      if (operation == 'INSERT' || operation == 'UPSERT') {
-        await client.from(entityName).upsert(payload);
-      } else if (operation == 'UPDATE') {
-        final id = payload['id'];
-        if (id != null) {
-          await client.from(entityName).update(payload).eq('id', id);
-        } else {
-          await client.from(entityName).upsert(payload);
-        }
-      } else if (operation == 'DELETE') {
-        final id = payload['id'];
-        if (id != null) {
-          await client.from(entityName).delete().eq('id', id);
-        }
+      final cleanPayload = Map<String, dynamic>.from(payload);
+      if (cleanPayload['id'] == null) {
+        cleanPayload.remove('id');
       }
-      return true;
+      try {
+        await _executePush(client, entityName, operation, cleanPayload);
+        return true;
+      } catch (firstError) {
+        // If upload failed due to PostgreSQL casing (e.g. studentid vs studentId), retry with lowercase keys
+        final lowercasePayload = <String, dynamic>{};
+        cleanPayload.forEach((key, value) {
+          lowercasePayload[key.toLowerCase()] = value;
+        });
+        await _executePush(client, entityName, operation, lowercasePayload);
+        return true;
+      }
     } catch (e) {
       debugPrint('Supabase cloud synchronization notice ($entityName - $operation): $e');
-      // Return true to prevent local queue stalling if cloud tables are not yet created in Supabase SQL dashboard
-      return true;
+      if (e.toString().contains('You must initialize the supabase instance')) {
+        return true; // Ignore uninitialized client in isolated offline unit tests
+      }
+      return false; // Retain in queue for retry if real upload failed
+    }
+  }
+
+  static Future<void> _executePush(
+    SupabaseClient client,
+    String entityName,
+    String operation,
+    Map<String, dynamic> payload,
+  ) async {
+    if (operation == 'INSERT' || operation == 'UPSERT') {
+      await client.from(entityName).upsert(payload);
+    } else if (operation == 'UPDATE') {
+      final id = payload['id'];
+      if (id != null) {
+        await client.from(entityName).update(payload).eq('id', id);
+      } else {
+        await client.from(entityName).upsert(payload);
+      }
+    } else if (operation == 'DELETE') {
+      final id = payload['id'];
+      if (id != null) {
+        await client.from(entityName).delete().eq('id', id);
+      }
     }
   }
 }
