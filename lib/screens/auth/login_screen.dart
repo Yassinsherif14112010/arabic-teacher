@@ -78,38 +78,49 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Header icon
+                  // Header Logo
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primary, width: 2.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
-                    child: const Icon(
-                      Icons.lock_person_rounded,
-                      size: 36,
-                      color: AppColors.primary,
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/logo.jpg',
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
+                  ).animate().scale(duration: 450.ms, curve: Curves.easeOutBack),
                   const SizedBox(height: 20),
                   Text(
-                    'تسجيل الدخول',
+                    'الشاعر في اللغة العربية',
                     style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : Colors.black87,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'منصة الشاعر في اللغة العربية - أ. محسن شاكر',
+                    'منصة الأستاذ محسن شاكر - بوابة المسؤول',
                     style: TextStyle(
                       fontFamily: 'Cairo',
-                      fontSize: 14,
-                      color: isDark ? Colors.white60 : Colors.black54,
+                      fontSize: 15,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                      fontWeight: FontWeight.w500,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
 
@@ -148,27 +159,36 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Remember me & Forgot Password Row
-                  Row(
+                  // Remember me & Forgot Password Row (Responsive Wrap)
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
                     children: [
-                      Checkbox(
-                        value: _rememberMe,
-                        onChanged: (val) => setState(() => _rememberMe = val ?? true),
-                        activeColor: AppColors.emerald,
-                      ),
-                      GestureDetector(
-                        onTap: () => setState(() => _rememberMe = !_rememberMe),
-                        child: Text(
-                          'تذكرني على هذا الجهاز',
-                          style: TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 13,
-                            color: isDark ? Colors.white70 : Colors.black87,
-                            fontWeight: FontWeight.w600,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Checkbox(
+                            value: _rememberMe,
+                            onChanged: (val) => setState(() => _rememberMe = val ?? true),
+                            activeColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                           ),
-                        ),
+                          GestureDetector(
+                            onTap: () => setState(() => _rememberMe = !_rememberMe),
+                            child: Text(
+                              'تذكرني على هذا الجهاز',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 13,
+                                color: isDark ? Colors.white70 : Colors.black87,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const Spacer(),
                       TextButton(
                         onPressed: () {
                           showDialog(
@@ -178,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                         child: const Text(
                           'نسيت كلمة المرور؟',
-                          style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.orange),
+                          style: TextStyle(fontFamily: 'Cairo', fontSize: 13, color: AppColors.orange, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -209,9 +229,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Register link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  // Register link (Responsive Wrap)
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         'ليس لديك حساب مسؤول بعد؟',

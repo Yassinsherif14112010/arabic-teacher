@@ -150,12 +150,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
-                        const Spacer(),
-                        const Text(
-                          'إنشاء حساب معلم آمن',
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                        const Expanded(
+                          child: Text(
+                            'إنشاء حساب معلم آمن',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                        const Spacer(flex: 2),
+                        const SizedBox(width: 40),
                       ],
                     ),
                     const SizedBox(height: 24),

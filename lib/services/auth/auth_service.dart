@@ -121,6 +121,9 @@ class AuthService {
     } on AuthException catch (e) {
       await AuthRateLimiter.recordFailedLogin(email);
       final lowerMsg = e.message.toLowerCase();
+      if (lowerMsg.contains('socket') || lowerMsg.contains('host lookup') || lowerMsg.contains('network') || lowerMsg.contains('clientexception') || lowerMsg.contains('connection')) {
+        throw Exception('تعذر الاتصال بخوادم المنصة. يرجى التأكد من اتصالك بالإنترنت أو شبكة الواي فاي.');
+      }
       if (lowerMsg.contains('invalid') || lowerMsg.contains('credentials') || lowerMsg.contains('user not found')) {
         throw Exception(AuthRateLimiter.genericErrorMessage);
       }
@@ -128,8 +131,12 @@ class AuthService {
         throw Exception('البريد الإلكتروني غير مفعل بَعد. يرجى مراجعة صندوق بريدك للضغط على رابط التفعيل.');
       }
       throw Exception(e.message.isEmpty ? AuthRateLimiter.genericErrorMessage : e.message);
-    } catch (_) {
+    } catch (e) {
       await AuthRateLimiter.recordFailedLogin(email);
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('socket') || msg.contains('host lookup') || msg.contains('network') || msg.contains('clientexception') || msg.contains('connection')) {
+        throw Exception('تعذر الاتصال بخوادم المنصة. يرجى التأكد من اتصالك بالإنترنت أو شبكة الواي فاي.');
+      }
       throw Exception(AuthRateLimiter.genericErrorMessage);
     }
   }
@@ -177,6 +184,9 @@ class AuthService {
       await _storage.write(key: _kSessionEmailKey, value: email);
     } on AuthException catch (e) {
       final lowerMsg = e.message.toLowerCase();
+      if (lowerMsg.contains('socket') || lowerMsg.contains('host lookup') || lowerMsg.contains('network') || lowerMsg.contains('clientexception') || lowerMsg.contains('connection')) {
+        throw Exception('تعذر الاتصال بخوادم المنصة. يرجى التأكد من اتصالك بالإنترنت أو شبكة الواي فاي.');
+      }
       if (e.statusCode == '429' || lowerMsg.contains('rate') || lowerMsg.contains('after')) {
         throw Exception('لدواعي الأمن وحظر التكرار السريع، يرجى الانتظار دقيقة واحدة قبل إرسال طلب تفعيل جديد.');
       }
@@ -185,8 +195,12 @@ class AuthService {
       }
       throw Exception(e.message.isEmpty ? 'فشل إتمام إنشاء الحساب. يرجى التأكد من صحة البيانات وإعادة المحاولة.' : e.message);
     } catch (e) {
-      final msg = e.toString().replaceAll('Exception: ', '');
-      throw Exception(msg);
+      final msg = e.toString();
+      final lowerMsg = msg.toLowerCase();
+      if (lowerMsg.contains('socket') || lowerMsg.contains('host lookup') || lowerMsg.contains('network') || lowerMsg.contains('clientexception') || lowerMsg.contains('connection')) {
+        throw Exception('تعذر الاتصال بخوادم المنصة. يرجى التأكد من اتصالك بالإنترنت أو شبكة الواي فاي.');
+      }
+      throw Exception(msg.replaceAll('Exception: ', ''));
     }
   }
 
