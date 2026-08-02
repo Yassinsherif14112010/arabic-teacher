@@ -459,7 +459,7 @@ class _RollCard extends StatelessWidget {
                   flex: 3,
                   child: DropdownButtonFormField<String>(
                     isExpanded: true,
-                    initialValue: grade,
+                    value: grade,
                     decoration:
                         const InputDecoration(hintText: 'اختر الصف...'),
                     items: kGrades

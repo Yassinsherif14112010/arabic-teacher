@@ -428,7 +428,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   isExpanded: true,
-                  initialValue: selectedGrade,
+                  value: selectedGrade,
                   decoration:
                       const InputDecoration(labelText: 'الصف الدراسي'),
                   items: _grades

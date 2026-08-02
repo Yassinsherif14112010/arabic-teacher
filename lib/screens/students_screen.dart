@@ -229,7 +229,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String?>(
                       isExpanded: true,
-                      initialValue: selectedGrade,
+                      value: selectedGrade,
                       decoration:
                           const InputDecoration(labelText: 'الصف الدراسي'),
                       items: [
@@ -247,7 +247,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                       const SizedBox(height: 14),
                       DropdownButtonFormField<int?>(
                         isExpanded: true,
-                        initialValue: selectedGroupId,
+                        value: selectedGroupId,
                         decoration: const InputDecoration(
                             labelText: 'المجموعة الدراسية'),
                         items: [

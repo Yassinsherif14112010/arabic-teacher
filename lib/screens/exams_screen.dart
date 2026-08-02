@@ -134,7 +134,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
   Widget _buildGradeFilter(ThemeData theme) {
     return DropdownButtonFormField<String?>(
       isExpanded: true,
-      initialValue: _filterGrade.isEmpty ? null : _filterGrade,
+      value: _filterGrade.isEmpty ? null : _filterGrade,
       decoration: const InputDecoration(labelText: 'تصفية بالصف'),
       items: [
         const DropdownMenuItem(value: null, child: Text('كل الصفوف', overflow: TextOverflow.ellipsis)),
@@ -152,7 +152,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
       List<Student> students, ThemeData theme) {
     return DropdownButtonFormField<Student?>(
       isExpanded: true,
-      initialValue: _selectedStudent,
+      value: _selectedStudent,
       decoration:
           const InputDecoration(labelText: 'عرض درجات طالب'),
       items: [
@@ -176,7 +176,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
   Widget _buildTypeFilter(ThemeData theme) {
     return DropdownButtonFormField<ExamType?>(
       isExpanded: true,
-      initialValue: _filterType,
+      value: _filterType,
       decoration: const InputDecoration(labelText: 'نوع الامتحان'),
       items: [
         const DropdownMenuItem(value: null, child: Text('كل الأنواع', overflow: TextOverflow.ellipsis)),
@@ -403,7 +403,7 @@ class _AddGradeFormState extends State<_AddGradeForm> {
                   width: 240,
                   child: DropdownButtonFormField<int?>(
                     isExpanded: true,
-                    initialValue: _studentId,
+                    value: _studentId,
                     decoration:
                         const InputDecoration(labelText: 'الطالب *'),
                     items: [
@@ -423,7 +423,7 @@ class _AddGradeFormState extends State<_AddGradeForm> {
                   width: 160,
                   child: DropdownButtonFormField<ExamType>(
                     isExpanded: true,
-                    initialValue: _examType,
+                    value: _examType,
                     decoration:
                         const InputDecoration(labelText: 'نوع الامتحان'),
                     items: ExamType.values
