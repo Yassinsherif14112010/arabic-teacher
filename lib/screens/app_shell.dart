@@ -75,7 +75,7 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isTablet = size.shortestSide >= 600;
+    final isTablet = size.width >= 480 || size.shortestSide >= 450;
 
     if (isTablet) {
       return _TabletLayout(
@@ -119,7 +119,7 @@ class _TabletLayout extends StatelessWidget {
         children: [
           // ── Sidebar ──────────────────────────────────────────────────────
           SizedBox(
-            width: 260,
+            width: 230,
             child: _Sidebar(
               items: items,
               selectedIndex: selectedIndex,
@@ -230,7 +230,7 @@ class _Sidebar extends StatelessWidget {
           children: [
             // ── Logo / Brand ──────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
               child: Row(
                 children: [
                   Container(
@@ -286,8 +286,8 @@ class _Sidebar extends StatelessWidget {
 
             // ── Teacher info ──────────────────────────────────────────────
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withAlpha(13)
@@ -497,7 +497,7 @@ class _NavTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
@@ -506,7 +506,7 @@ class _NavTile extends StatelessWidget {
           onTap: onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: isActive

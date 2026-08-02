@@ -37,7 +37,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isTablet = size.width >= 700;
+    final isTablet = size.width >= 480;
 
     // Filter
     final filtered = app.students.where((s) {

@@ -30,8 +30,8 @@ class _ExamsScreenState extends State<ExamsScreen> {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isTablet = size.width >= 700;
-    final padding = isTablet ? 24.0 : 16.0;
+    final isTablet = size.width >= 480;
+    final padding = isTablet ? 20.0 : 16.0;
 
     // Filter students by grade
     final filteredStudents = _filterGrade.isEmpty

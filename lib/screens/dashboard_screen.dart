@@ -34,8 +34,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isTablet = size.width >= 700;
-    final padding = isTablet ? 28.0 : 16.0;
+    final isTablet = size.width >= 480;
+    final padding = isTablet ? 20.0 : 16.0;
 
     if (app.loading) {
       return const Center(
