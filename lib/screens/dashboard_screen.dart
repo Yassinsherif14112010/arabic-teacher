@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../models/study_group.dart';
 import '../theme/app_theme.dart';
+import '../widgets/content_width_provider.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/confirm_dialog.dart';
@@ -33,8 +34,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-    final isTablet = size.width >= 480;
+    final contentWidth = ContentWidthProvider.of(context);
+    final isTablet = contentWidth >= 480;
     final padding = isTablet ? 20.0 : 16.0;
 
     if (app.loading) {
@@ -58,11 +59,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 28),
 
               // ── Stats grid ───────────────────────────────────────────────
-              _buildStatsGrid(context, app, isTablet),
+              _buildStatsGrid(context, app),
               const SizedBox(height: 32),
 
               // ── Two-column layout on tablet ───────────────────────────────
-              if (isTablet)
+              if (contentWidth >= 600)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -163,8 +164,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ─── Stats grid ───────────────────────────────────────────────────────────
 
   Widget _buildStatsGrid(
-      BuildContext context, AppProvider app, bool isTablet) {
-    final crossAxisCount = isTablet ? 4 : 2;
+      BuildContext context, AppProvider app) {
     final stats = [
       (
         title: 'إجمالي الطلاب',
@@ -199,8 +199,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 220,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
         mainAxisExtent: 125,

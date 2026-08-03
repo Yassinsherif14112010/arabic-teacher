@@ -5,6 +5,7 @@ import '../providers/app_provider.dart';
 import '../models/student.dart';
 import '../models/study_group.dart';
 import '../theme/app_theme.dart';
+import '../widgets/content_width_provider.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/motion/staggered_list_item.dart';
@@ -37,7 +38,8 @@ class _StudentsScreenState extends State<StudentsScreen> {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isTablet = size.width >= 480;
+    final contentWidth = ContentWidthProvider.of(context);
+    final isTablet = contentWidth >= 480;
 
     // Filter
     final filtered = app.students.where((s) {

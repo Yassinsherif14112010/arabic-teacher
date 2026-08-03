@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/content_width_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../providers/theme_provider.dart';
@@ -75,7 +76,7 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isTablet = size.width >= 480 || size.shortestSide >= 450;
+    final isTablet = size.width >= 710;
 
     if (isTablet) {
       return _TabletLayout(
@@ -129,15 +130,22 @@ class _TabletLayout extends StatelessWidget {
           ),
           // ── Content ──────────────────────────────────────────────────────
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              transitionBuilder: (child, animation) =>
-                  FadeTransition(opacity: animation, child: child),
-              child: IndexedStack(
-                key: ValueKey<int>(selectedIndex),
-                index: selectedIndex,
-                children: items.map((i) => i.screen).toList(),
-              ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return ContentWidthProvider(
+                  contentWidth: constraints.maxWidth,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    transitionBuilder: (child, animation) =>
+                        FadeTransition(opacity: animation, child: child),
+                    child: IndexedStack(
+                      key: ValueKey<int>(selectedIndex),
+                      index: selectedIndex,
+                      children: items.map((i) => i.screen).toList(),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],

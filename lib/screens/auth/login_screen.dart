@@ -49,6 +49,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.watch<AuthProvider>();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth >= 710;
+    final cardMaxWidth = isWide ? 520.0 : 440.0;
+    final outerPadding = isWide ? 40.0 : 24.0;
+    final innerPadding = isWide ? 40.0 : 32.0;
+    final logoSize = isWide ? 110.0 : 100.0;
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0D1526) : const Color(0xFFF8FAFC),
@@ -56,10 +62,10 @@ class _LoginScreenState extends State<LoginScreen> {
         textDirection: TextDirection.rtl,
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(outerPadding),
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 440),
-              padding: const EdgeInsets.all(32),
+              constraints: BoxConstraints(maxWidth: cardMaxWidth),
+              padding: EdgeInsets.all(innerPadding),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -80,8 +86,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   // Header Logo
                   Container(
-                    width: 100,
-                    height: 100,
+                    width: logoSize,
+                    height: logoSize,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.primary, width: 2.5),

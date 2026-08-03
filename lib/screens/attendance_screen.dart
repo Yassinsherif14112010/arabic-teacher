@@ -4,6 +4,7 @@ import '../providers/app_provider.dart';
 import '../models/attendance.dart';
 import '../models/student.dart';
 import '../theme/app_theme.dart';
+import '../widgets/content_width_provider.dart';
 import '../widgets/empty_state.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'students_screen.dart' show kGrades;
@@ -139,7 +140,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
-    final isTablet = size.width >= 480;
+    final contentWidth = ContentWidthProvider.of(context);
+    final isTablet = contentWidth >= 480;
     final padding = isTablet ? 20.0 : 16.0;
 
     final students = app.students;

@@ -109,6 +109,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final size = MediaQuery.of(context).size;
+    final isWide = size.width >= 710;
+    final cardWidth = isWide ? 520.0 : (size.width > 500 ? 480.0 : double.infinity);
+    final outerPadding = isWide ? 40.0 : 24.0;
+    final innerPadding = isWide ? 40.0 : 32.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -125,10 +129,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ),
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(outerPadding),
               child: Container(
-                width: size.width > 500 ? 480 : double.infinity,
-                padding: const EdgeInsets.all(32),
+                width: cardWidth,
+                padding: EdgeInsets.all(innerPadding),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E293B).withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(24),
