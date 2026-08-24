@@ -30,7 +30,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
+
     final contentWidth = ContentWidthProvider.of(context);
     final isTablet = contentWidth >= 480;
     final padding = isTablet ? 20.0 : 16.0;
@@ -136,7 +136,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
   Widget _buildGradeFilter(ThemeData theme) {
     return DropdownButtonFormField<String?>(
       isExpanded: true,
-      value: _filterGrade.isEmpty ? null : _filterGrade,
+      initialValue: _filterGrade.isEmpty ? null : _filterGrade,
       decoration: const InputDecoration(labelText: 'تصفية بالصف'),
       items: [
         const DropdownMenuItem(value: null, child: Text('كل الصفوف', overflow: TextOverflow.ellipsis)),
@@ -154,7 +154,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
       List<Student> students, ThemeData theme) {
     return DropdownButtonFormField<Student?>(
       isExpanded: true,
-      value: _selectedStudent,
+      initialValue: _selectedStudent,
       decoration:
           const InputDecoration(labelText: 'عرض درجات طالب'),
       items: [
@@ -178,7 +178,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
   Widget _buildTypeFilter(ThemeData theme) {
     return DropdownButtonFormField<ExamType?>(
       isExpanded: true,
-      value: _filterType,
+      initialValue: _filterType,
       decoration: const InputDecoration(labelText: 'نوع الامتحان'),
       items: [
         const DropdownMenuItem(value: null, child: Text('كل الأنواع', overflow: TextOverflow.ellipsis)),
@@ -405,7 +405,7 @@ class _AddGradeFormState extends State<_AddGradeForm> {
                   width: 240,
                   child: DropdownButtonFormField<int?>(
                     isExpanded: true,
-                    value: _studentId,
+                    initialValue: _studentId,
                     decoration:
                         const InputDecoration(labelText: 'الطالب *'),
                     items: [
@@ -425,7 +425,7 @@ class _AddGradeFormState extends State<_AddGradeForm> {
                   width: 160,
                   child: DropdownButtonFormField<ExamType>(
                     isExpanded: true,
-                    value: _examType,
+                    initialValue: _examType,
                     decoration:
                         const InputDecoration(labelText: 'نوع الامتحان'),
                     items: ExamType.values

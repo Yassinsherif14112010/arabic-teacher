@@ -1,5 +1,6 @@
 // ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'dart:js_interop';
+import 'package:web/web.dart' as html;
 import 'dart:convert';
 import '../models/student.dart';
 import '../models/attendance.dart';
@@ -273,7 +274,7 @@ void openMonthlyAttendanceReportImpl(
       let link = document.createElement("a");
       let url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
-      link.setAttribute("download", `تقرير_الحضور_الشهري_${monthStr}.csv`);
+      link.setAttribute("download", `تقرير_الحضور_الشهري_$monthStr.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -283,8 +284,8 @@ void openMonthlyAttendanceReportImpl(
 </html>
 ''');
 
-  final blob = html.Blob([buffer.toString()], 'text/html; charset=utf-8');
-  final url = html.Url.createObjectUrlFromBlob(blob);
+  final blob = html.Blob([buffer.toString().toJS].toJS, html.BlobPropertyBag(type: 'text/html; charset=utf-8'));
+  final url = html.URL.createObjectURL(blob);
   html.window.open(url, '_blank');
 }
 

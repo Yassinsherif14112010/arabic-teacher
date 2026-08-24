@@ -139,7 +139,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
+
     final contentWidth = ContentWidthProvider.of(context);
     final isTablet = contentWidth >= 480;
     final padding = isTablet ? 20.0 : 16.0;
@@ -461,7 +461,7 @@ class _RollCard extends StatelessWidget {
                   flex: 3,
                   child: DropdownButtonFormField<String>(
                     isExpanded: true,
-                    value: grade,
+                    initialValue: grade,
                     decoration:
                         const InputDecoration(hintText: 'اختر الصف...'),
                     items: kGrades

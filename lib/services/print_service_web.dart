@@ -1,5 +1,6 @@
 // ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'dart:js_interop';
+import 'package:web/web.dart' as html;
 
 void printStudentCardImpl(String name, String grade, String barcode) {
   final htmlContent = '''
@@ -123,12 +124,12 @@ void printStudentCardImpl(String name, String grade, String barcode) {
 </html>
 ''';
 
-  final blob = html.Blob([htmlContent], 'text/html; charset=utf-8');
-  final url = html.Url.createObjectUrlFromBlob(blob);
+  final blob = html.Blob([htmlContent.toJS].toJS, html.BlobPropertyBag(type: 'text/html; charset=utf-8'));
+  final url = html.URL.createObjectURL(blob);
   html.window.open(url, '_blank');
 
   // Clean up object URL memory after window opens
   Future.delayed(const Duration(seconds: 30), () {
-    html.Url.revokeObjectUrl(url);
+    html.URL.revokeObjectURL(url);
   });
 }

@@ -37,7 +37,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
+
     final contentWidth = ContentWidthProvider.of(context);
     final isTablet = contentWidth >= 480;
 
@@ -231,7 +231,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                     const SizedBox(height: 14),
                     DropdownButtonFormField<String?>(
                       isExpanded: true,
-                      value: selectedGrade,
+                      initialValue: selectedGrade,
                       decoration:
                           const InputDecoration(labelText: 'الصف الدراسي'),
                       items: [
@@ -249,7 +249,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                       const SizedBox(height: 14),
                       DropdownButtonFormField<int?>(
                         isExpanded: true,
-                        value: selectedGroupId,
+                        initialValue: selectedGroupId,
                         decoration: const InputDecoration(
                             labelText: 'المجموعة الدراسية'),
                         items: [

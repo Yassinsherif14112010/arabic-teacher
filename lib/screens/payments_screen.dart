@@ -30,7 +30,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppProvider>();
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
+
     final contentWidth = ContentWidthProvider.of(context);
     final isTablet = contentWidth >= 480;
     final padding = isTablet ? 20.0 : 16.0;
@@ -224,7 +224,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   Widget _buildStudentFilter(AppProvider app, ThemeData theme) {
     return DropdownButtonFormField<int?>(
       isExpanded: true,
-      value: _filterStudentId,
+      initialValue: _filterStudentId,
       decoration: const InputDecoration(labelText: 'تصفية بالطالب'),
       items: [
         const DropdownMenuItem(value: null, child: Text('كل الطلاب', overflow: TextOverflow.ellipsis)),
@@ -324,7 +324,7 @@ class _FeeSettingsPanelState extends State<_FeeSettingsPanel> {
                   width: 220,
                   child: DropdownButtonFormField<String>(
                     isExpanded: true,
-                    value: _grade,
+                    initialValue: _grade,
                     decoration: const InputDecoration(labelText: 'الصف'),
                     items: kGrades
                         .map((g) =>
@@ -482,7 +482,7 @@ class _AddPaymentFormState extends State<_AddPaymentForm> {
                   width: 240,
                   child: DropdownButtonFormField<int?>(
                     isExpanded: true,
-                    value: _studentId,
+                    initialValue: _studentId,
                     decoration:
                         const InputDecoration(labelText: 'الطالب *'),
                     items: [
@@ -515,7 +515,7 @@ class _AddPaymentFormState extends State<_AddPaymentForm> {
                   width: 180,
                   child: DropdownButtonFormField<PaymentMethod>(
                     isExpanded: true,
-                    value: _method,
+                    initialValue: _method,
                     decoration:
                         const InputDecoration(labelText: 'طريقة الدفع'),
                     items: PaymentMethod.values
