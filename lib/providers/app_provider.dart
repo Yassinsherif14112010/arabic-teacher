@@ -89,12 +89,34 @@ class AppProvider extends ChangeNotifier {
     SyncService.processSyncQueue().then((_) => _refreshPendingSyncCount());
   }
 
+  /// Refresh all in-memory data from local database.
+  /// Called after auto-sync pulls new cloud data.
+  Future<void> _refreshFromLocal() async {
+    try {
+      _students = await DatabaseService.getStudents();
+      _groups = await DatabaseService.getGroups();
+      _todayAttendance =
+          await DatabaseService.getAttendanceForDate(todayDateString);
+      _payments = await DatabaseService.getPayments();
+      _grades = await DatabaseService.getAllGrades();
+      _feeSettings = await DatabaseService.getFeeSettings();
+      await _refreshPendingSyncCount();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Refresh from local after sync: $e');
+    }
+  }
+
   // ─── Load all data ────────────────────────────────────────────────────────
   Future<void> loadAll() async {
     _loading = true;
     _error = null;
     notifyListeners();
     try {
+      // Start connectivity monitoring for auto-sync
+      SyncService.startMonitoring();
+      SyncService.addSyncListener(_refreshFromLocal);
+
       await SyncService.processSyncQueue();
       await SyncService.pullFromSupabase();
       _students = await DatabaseService.getStudents();

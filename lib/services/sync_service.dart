@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'database_service.dart';
 
@@ -12,6 +13,7 @@ enum SyncStatus {
 }
 
 /// Offline-First Sync Manager connecting local SQLite to Supabase.
+/// Automatically monitors connectivity and syncs when back online.
 class SyncService {
   static String supabaseUrl = 'https://kfgrcxskubixdzzcmdge.supabase.co';
   static String supabaseAnonKey = 'sb_publishable_zGro7rAOdAGmmOWJ-BcCRQ_VZJsPgpk';
@@ -19,10 +21,17 @@ class SyncService {
   static SyncStatus _status = SyncStatus.offline;
   static DateTime? _lastSyncedAt;
   static String? _lastError;
+  static bool _isActuallyOnline = false;
+
+  /// Connectivity monitoring
+  static StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  static final List<VoidCallback> _onSyncListeners = [];
+  static bool _monitoring = false;
 
   static SyncStatus get status => _status;
   static DateTime? get lastSyncedAt => _lastSyncedAt;
   static String? get lastError => _lastError;
+  static bool get isActuallyOnline => _isActuallyOnline;
 
   /// Check if Supabase connection details are provided.
   static bool get isConfigured =>
@@ -34,16 +43,112 @@ class SyncService {
     supabaseAnonKey = anonKey;
   }
 
-  /// Check network availability.
+  /// Register a callback that gets called after auto-sync completes.
+  /// Used by AppProvider to refresh its in-memory state.
+  static void addSyncListener(VoidCallback listener) {
+    _onSyncListeners.add(listener);
+  }
+
+  /// Remove a previously registered sync listener.
+  static void removeSyncListener(VoidCallback listener) {
+    _onSyncListeners.remove(listener);
+  }
+
+  /// Start monitoring connectivity changes.
+  /// When the device goes online after being offline, auto-sync triggers.
+  static void startMonitoring() {
+    if (_monitoring) return;
+    _monitoring = true;
+
+    _connectivitySub = Connectivity().onConnectivityChanged.listen(
+      (results) async {
+        final hasConnection = results.any((r) => r != ConnectivityResult.none);
+
+        if (hasConnection && !_isActuallyOnline) {
+          // Transition: offline → online
+          debugPrint('📡 Connectivity restored — triggering auto-sync...');
+          _isActuallyOnline = true;
+
+          // Small delay to let the network stabilize
+          await Future.delayed(const Duration(seconds: 2));
+
+          // Auto-sync
+          await _autoSync();
+        } else if (!hasConnection) {
+          _isActuallyOnline = false;
+          _status = SyncStatus.offline;
+        }
+      },
+    );
+
+    // Check initial connectivity
+    Connectivity().checkConnectivity().then((results) {
+      _isActuallyOnline = results.any((r) => r != ConnectivityResult.none);
+      if (_isActuallyOnline) {
+        _status = isConfigured ? SyncStatus.online : SyncStatus.offline;
+      }
+    });
+  }
+
+  /// Stop monitoring connectivity changes.
+  static void stopMonitoring() {
+    _connectivitySub?.cancel();
+    _connectivitySub = null;
+    _monitoring = false;
+  }
+
+  /// Internal auto-sync triggered by connectivity change.
+  static Future<void> _autoSync() async {
+    if (!isConfigured) return;
+
+    try {
+      _status = SyncStatus.syncing;
+
+      // 1. Push pending local changes to cloud
+      final synced = await processSyncQueue();
+      debugPrint('✅ Auto-sync pushed $synced pending items');
+
+      // 2. Pull latest data from cloud
+      await pullFromSupabase();
+      debugPrint('✅ Auto-sync pulled latest cloud data');
+
+      _status = SyncStatus.online;
+      _lastSyncedAt = DateTime.now();
+
+      // Notify listeners (AppProvider) to refresh UI
+      for (final listener in _onSyncListeners) {
+        listener();
+      }
+    } catch (e) {
+      debugPrint('⚠️ Auto-sync error: $e');
+      _status = SyncStatus.error;
+      _lastError = e.toString();
+    }
+  }
+
+  /// Check network availability by actually testing the connection.
   static Future<bool> checkConnectivity() async {
-    // SQLite local database is always primary.
-    // If Supabase URL is not set, we operate in full local offline mode.
     if (!isConfigured) {
       _status = SyncStatus.offline;
       return false;
     }
-    _status = SyncStatus.online;
-    return true;
+
+    try {
+      final results = await Connectivity().checkConnectivity();
+      final hasConnection = results.any((r) => r != ConnectivityResult.none);
+      if (!hasConnection) {
+        _isActuallyOnline = false;
+        _status = SyncStatus.offline;
+        return false;
+      }
+      _isActuallyOnline = true;
+      _status = SyncStatus.online;
+      return true;
+    } catch (_) {
+      _isActuallyOnline = false;
+      _status = SyncStatus.offline;
+      return false;
+    }
   }
 
   /// Process all pending items queued in local SQLite `sync_queue`.
