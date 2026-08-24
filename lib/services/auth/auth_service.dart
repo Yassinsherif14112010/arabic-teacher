@@ -235,8 +235,8 @@ class AuthService {
             msg.contains('supabase') || msg.contains('initialize')) {
           shouldFallbackOffline = true;
         } else {
-          // Rethrow non-network exceptions (like the email verification message)
-          rethrow;
+          // Always fallback offline for unknown errors during cloud operation to ensure offline-first reliability
+          shouldFallbackOffline = true;
         }
       }
     } else {

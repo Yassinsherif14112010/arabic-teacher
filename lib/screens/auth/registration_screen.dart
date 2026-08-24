@@ -154,15 +154,52 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
-                        const Expanded(
-                          child: Text(
-                            'إنشاء حساب معلم آمن',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(width: 40),
+                        const Spacer(),
                       ],
+                    ),
+                    // Header Logo
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.emerald, width: 2.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.emerald.withValues(alpha: 0.25),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/logo.jpg',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ).animate().scale(duration: 450.ms, curve: Curves.easeOutBack),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'الشاعر في اللغة العربية',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'إنشاء حساب معلم آمن',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 16,
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
                     TextField(
